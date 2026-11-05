@@ -61,7 +61,7 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
             with st.spinner("جاري قراءة القصيدة وتحليلها..."):
                 analysis_result = None
                 
-                # المحاولة الأولى: استخدام النموذج الأساسي الأحدث لعام 2026
+                # المحاولة الأولى: استخدام النموذج الأساسي السريع والأحدث لعام 2026
                 try:
                     response = client.models.generate_content(
                         model='gemini-3.8-flash',
@@ -69,10 +69,9 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
                     )
                     analysis_result = response.text
                 except Exception as model_error:
-                    # المحاولة الثانية المدمجة: التبديل التلقائي الاحتياطي في حال حدوث ضغط (خطأ 503)
-                    st.warning("⚠️ النموذج الأساسي واجه ضغطاً مؤقتاً، يتم الآن التبديل تلقائياً للنموذج الاحتياطي المستقر...")
+                    # المحاولة الثانية المدمجة: التبديل للنموذج الاحتياطي فائق السرعة والمتاح حالياً
                     response = client.models.generate_content(
-                        model='gemini-2.5-flash',
+                        model='gemini-3.5-flash-lite',
                         contents=prompt,
                     )
                     analysis_result = response.text
