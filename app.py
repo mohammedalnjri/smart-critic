@@ -59,13 +59,36 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
             prompt = get_poetry_analysis_prompt(poem_input)
             
             with st.spinner("جاري قراءة القصيدة وتحليلها..."):
-                # استخدام الموديل المستقر والمعتمد دون كتابة أي بادئة إضافية
+                # استخدام الموديل المستقر والمعتمد لعام 2026
                 response = client.models.generate_content(
-                    model='gemini-1.5-flash',
-
+                    model='gemini-3.8-flash',
                     contents=prompt,
                 )
-                st.markdown(response.text)
+                
+                analysis_result = response.text
+                
+                # عرض النتيجة منسقة بـ Markdown
+                st.markdown(analysis_result)
+                
+                st.divider()
+                
+                # 🛠️ الإضافات الجديدة: أدوات مساعدة للمستخدم
+                st.subheader("🛠️ أدوات التقرير")
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    # زر لتحميل التحليل كملف نصي منسق ومباشر
+                    st.download_button(
+                        label="📥 تحميل التقرير كملف نصي (TXT)",
+                        data=analysis_result,
+                        file_name="تحليل_القصيدة.txt",
+                        mime="text/plain"
+                    )
+                
+                with col2:
+                    # خاصية النسخ المباشر المدمجة في Streamlit
+                    st.info("💡 يمكنك نسخ النص بالكامل مباشرة عبر الضغط على أيقونة النسخ التي تظهر أعلى زاوية مربع النص التالي:")
+                    st.text_area("نص التحليل القابل للنسخ السريع:", value=analysis_result, height=150)
                 
         except Exception as e:
             st.error(f"❌ حدث خطأ أثناء الاتصال بعقل الذكاء الاصطناعي: {str(e)}")
