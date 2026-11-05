@@ -5,7 +5,7 @@ from google import genai
 # =====================================================================
 # 1. دالة التحليل الذكي المحسنة مع تفعيل الكاش السريع (Cache)
 # =====================================================================
-@st.cache_data(show_spinner=False, ttl=86400) # حفظ النتائج في الذاكرة لمدة 24 ساعة لتسريع استجابة الموقع
+@st.cache_data(show_spinner=False, ttl=86400) # حفظ النتائج في الذاكرة لتسريع استجابة الموقع
 def get_poetry_analysis_prompt(poem_text):
     return f"""
     بصفتك بروفيسور وعالم نقد أدبي ومحقق دواوين وعالم عروض، قم بتحليل القصيدة التالية تحليلاً أكاديمياً موسعاً وشاملاً لكل الأبيات دون أي اختصار أو إيجاز:
@@ -59,10 +59,10 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
             client = genai.Client(api_key=api_key)
             prompt = get_poetry_analysis_prompt(poem_input)
             
-            # تشغيل ميزة البث الحي الخارقة لعرض الكلمات فور توليدها
+            # تشغيل ميزة البث الحي الخارقة لعرض الكلمات فور توليدها باستخدام النموذج المستقر
             with st.spinner("جاري قراءة القصيدة بالكامل وتحليل معانيها وبحورها وصورها البلاغية بيتًا بيتك..."):
                 response_stream = client.models.generate_content_stream(
-                    model='gemini-3.8-flash',
+                    model='gemini-2.5-flash',
                     contents=prompt,
                 )
                 
@@ -70,7 +70,7 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
                 st.write_stream(chunk.text for chunk in response_stream)
                 
         except Exception as e:
-            st.error(f"❌ حدث خطأ أثناء الاتصال : {str(e)}")
+            st.error(f"❌ حدث خطأ أثناء الاتصال بعقل الذكاء الاصطناعي: {str(e)}")
 
 st.divider()
 st.write("صُنع بكفاءة برمجية عالية لخدمة لغة الضاد بواسطة المبرمج محمد النِجْري 💻")
