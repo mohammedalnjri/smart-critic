@@ -32,12 +32,14 @@ def analyze_full_poem_with_ai(poem_text):
         يرجى كتابة التحليل بلغة عربية فصحى رفيعة وتنسيقه بعناوين ونقاط واضحة جداً ومريحة للقراءة.
         """
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+           model='gemini-3.8-flash',
+
             contents=prompt,
         )
-        return response.text
+        return response.textmodel='gemini-3.8-flash',
+
     except Exception as e:
-        return f"❌ حدث خطأ أثناء الاتصال بعقل الذكاء الاصطناعي: {str(e)}"
+        return f"❌ حصل خطأ اثناء الاتصال : {str(e)}"
 
 # =====================================================================
 # 2. واجهة المستخدم الرسومية المستقرة والنظيفة (RTL)
