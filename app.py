@@ -84,28 +84,21 @@ def analyze_full_poem_with_ai(poem_text, api_key):
         return f"❌ حدث خطأ أثناء التحليل الأدبي: {str(e)}"
 
 # =====================================================================
-# 3. واجهة المستخدم الرسومية للتحليل الكامل (RTL)
+# 3. واجهة المستخدم الرسومية للتحليل الكامل
 # =====================================================================
-st.set_page_config(page_title="موسوعة الخليل الرقمية", layout="wide", page_icon="✒️")
-
-st.markdown("""
-    <style>
-    h1, h2, h3, p, div, span, label { text-align: right; direction: rtl; font-family: 'Tajawal', sans-serif; }
-    .stTextArea textarea { text-align: right; direction: rtl; font-size: 16px; }
-    .stButton>button { width: 100%; background-color: #0F172A; color: white; font-weight: bold; height: 55px; font-size: 18px; border-radius: 8px; }
-    </style>
-    """, unsafe_allowed_html=True)
-
 st.title("✒️ موسوعة الخليل الرقمية لتحليل القصائد الكاملة")
-st.caption("أداة أكاديمية متطورة | فكرة وتطوير المبرمج الذكي ✨")
+st.write("### فكرة وتطوير المبرمج محمد النِجْري ✨")
 
 with st.sidebar:
     st.header("⚙️ إعدادات المحرك")
     api_key = st.text_input("أدخل مفتاح Gemini API الخاص بك:", type="password")
     st.markdown("[اضغط هنا للحصول على مفتاحك المجاني](https://google.com)")
+    st.divider()
+    st.markdown("### 👨‍💻 مطوّر النظام")
+    st.info("تمت البرمجة والتطوير بواسطة: المبرمج محمد النِجْري")
 
 st.subheader("📋 اكتب أو الصق القصيدة الكاملة هنا")
-default_poem = """عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي العَزائِمُ\nوَتَأتِي عَلَى قَدْرِ الكِرامِ المَكارِمُ"""
+default_poem = "عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي العَزائِمُ\nوَتَأتِي عَلَى قَدْرِ الكِرامِ المَكارِمُ"
 
 poem_input = st.text_area("أدخل أبيات القصيدة (كل بيت في سطر منفصل):", value=default_poem, height=250)
 
@@ -127,3 +120,6 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
         with st.spinner("جاري قراءة القصيدة بالكامل وتحليل معانيها وصورها البلاغية بيتًا بيتك..."):
             ai_report = analyze_full_poem_with_ai(poem_input, api_key)
             st.markdown(ai_report)
+
+st.divider()
+st.write("صُنع بكفاءة برمجية عالية لخدمة لغة الضاد بواسطة المبرمج محمد النِجْري 💻")
