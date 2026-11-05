@@ -51,11 +51,14 @@ def advanced_arabic_prosody(text):
     return "".join(prosody_text)
 
 # =====================================================================
-# 2. الاستعلام البلاغي الموسع للقصائد الطويلة
+# 2. الاستعلام البلاغي الموسع المرتبط بالسيرفر تلقائياً
 # =====================================================================
-def analyze_full_poem_with_ai(poem_text, api_key):
+def analyze_full_poem_with_ai(poem_text):
+    # جلب المفتاح تلقائياً من إعدادات السيرفر دون تدخل المستخدم
+    api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    
     if not api_key:
-        return "⚠️ رجاءً قم بإدخال مفتاح الـ API في القائمة الجانبية لتفعيل التحليل الذكي."
+        return "⚠️ نظام الحماية السري قيد الإعداد على السيرفر، يرجى وضع المفتاح في لوحة التحكم الخاصة بـ Streamlit."
         
     try:
         client = genai.Client(api_key=api_key)
@@ -81,19 +84,17 @@ def analyze_full_poem_with_ai(poem_text, api_key):
         )
         return response.text
     except Exception as e:
-        return f"❌ حدث خطأ أثناء التحليل الأدبي: {str(e)}"
+        return f"❌ حدث خطأ أثناء الاتصال بعقل الذكاء الاصطناعي: {str(e)}"
 
 # =====================================================================
-# 3. واجهة المستخدم الرسومية للتحليل الكامل
+# 3. واجهة المستخدم الرسومية للتحليل الكامل (RTL)
 # =====================================================================
 st.title("✒️ نظام الناقد الذكي لتحليل وشرح القصائد")
-st.caption("أداة أكاديمية متطورة | فكرة وتطوير المبرمج محمد النِجْري ✨")
-
+st.write("### فكرة وتطوير المبرمج محمد النِجْري ✨")
 
 with st.sidebar:
-    st.header("⚙️ إعدادات المحرك")
-    api_key = st.text_input("أدخل مفتاح Gemini API الخاص بك:", type="password")
-    st.markdown("[اضغط هنا للحصول على مفتاحك المجاني](https://google.com)")
+    st.header("⚙️ إعدادات النظام")
+    st.success("🔒 النظام محمي ومتصل تلقائياً بالسيرفر السحابي الآمن.")
     st.divider()
     st.markdown("### 👨‍💻 مطوّر النظام")
     st.info("تمت البرمجة والتطوير بواسطة: المبرمج محمد النِجْري")
@@ -119,7 +120,7 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
     with col2:
         st.subheader("🧠 الشرح الأكاديمي والتحليل البلاغي المفصل")
         with st.spinner("جاري قراءة القصيدة بالكامل وتحليل معانيها وصورها البلاغية بيتًا بيتك..."):
-            ai_report = analyze_full_poem_with_ai(poem_input, api_key)
+            ai_report = analyze_full_poem_with_ai(poem_input)
             st.markdown(ai_report)
 
 st.divider()
