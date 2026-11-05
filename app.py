@@ -64,7 +64,7 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
                 # المحاولة الأولى: استخدام النموذج الأساسي السريع والأحدث لعام 2026
                 try:
                     response = client.models.generate_content(
-                        model='gemini-3.8-flash',
+                        gemini-3.5-flash-lite
                         contents=prompt,
                     )
                     analysis_result = response.text
