@@ -59,25 +59,35 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
             prompt = get_poetry_analysis_prompt(poem_input)
             
             with st.spinner("جاري قراءة القصيدة وتحليلها..."):
-                # استخدام الموديل المستقر والمعتمد لعام 2026
-                response = client.models.generate_content(
-                    model='gemini-3.8-flash',
-                    contents=prompt,
-                )
+                analysis_result = None
                 
-                analysis_result = response.text
+                # المحاولة الأولى: استخدام النموذج الأساسي الأحدث لعام 2026
+                try:
+                    response = client.models.generate_content(
+                        model='gemini-3.8-flash',
+                        contents=prompt,
+                    )
+                    analysis_result = response.text
+                except Exception as model_error:
+                    # المحاولة الثانية المدمجة: التبديل التلقائي الاحتياطي في حال حدوث ضغط (خطأ 503)
+                    st.warning("⚠️ النموذج الأساسي واجه ضغطاً مؤقتاً، يتم الآن التبديل تلقائياً للنموذج الاحتياطي المستقر...")
+                    response = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=prompt,
+                    )
+                    analysis_result = response.text
                 
-                # عرض النتيجة منسقة بـ Markdown
+                # عرض النتيجة منسقة بـ Markdown للمستخدم
                 st.markdown(analysis_result)
                 
                 st.divider()
                 
-                # 🛠️ الإضافات الجديدة: أدوات مساعدة للمستخدم
+                # أدوات التقرير المساعدة للمستخدم
                 st.subheader("🛠️ أدوات التقرير")
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    # زر لتحميل التحليل كملف نصي منسق ومباشر
+                    # زر لتحميل التحليل كملف نصي منسق
                     st.download_button(
                         label="📥 تحميل التقرير كملف نصي (TXT)",
                         data=analysis_result,
@@ -86,7 +96,7 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
                     )
                 
                 with col2:
-                    # خاصية النسخ المباشر المدمجة في Streamlit
+                    # خاصية النسخ المباشر المدمجة
                     st.info("💡 يمكنك نسخ النص بالكامل مباشرة عبر الضغط على أيقونة النسخ التي تظهر أعلى زاوية مربع النص التالي:")
                     st.text_area("نص التحليل القابل للنسخ السريع:", value=analysis_result, height=150)
                 
