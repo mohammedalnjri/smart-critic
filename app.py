@@ -21,14 +21,13 @@ def get_poetry_analysis_prompt(poem_text):
 # =====================================================================
 # 2. واجهة المستخدم الرسومية المستقرة والنظيفة والتصديق في قوقل
 # =====================================================================
-# وضعت لك الرمز السري هنا مباشرة في عنوان المتصفح ليقرأه قوقل فوراً قبل تحميل السيرفر
 st.set_page_config(
-    page_title="نظام الناقد الذكي الفائق - google-site-verification=I2lRbvk9y_t28q_uNFz0ITo4q0GEs-PdkxBr69zLBSA ",
+    page_title="نظام الناقد الذكي الفائق لنقد وتحليل الشعر",
     layout="wide"
 )
 
 # طريقة بديلة لحقن الرمز داخل جسم الصفحة الخارجي
-st.markdown('<p style="display:none;"><meta name="google-site-verification" content=" I2lRbvk9y_t28q_uNFz0ITo4q0GEs-PdkxBr69zLBSA" /></p>', unsafe_allow_html=True)
+st.markdown('<p style="display:none;"><meta name="google-site-verification" content="I2lRbvk9y_t28q_uNFz0ITo4q0GEs-PdkxBr69zLBSA" /></p>', unsafe_allow_html=True)
 
 st.title("✒️ نظام الناقد الذكي لتحليل وشرح القصائد")
 st.write("### فكرة وتطوير المبرمج محمد النجري ✨")
@@ -45,59 +44,56 @@ default_poem = "عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي �
 
 poem_input = st.text_area("أدخل أبيات القصيدة (كل بيت في سطر منفصل):", value=default_poem, height=250)
 
+# استخدام الـ Session State لحفظ النتيجة لمنع اختفائها عند استخدام أزرار التحميل والنسخ
+if "analysis_output" not def st.session_state:
+    st.session_state.analysis_output = ""
+
 if st.button("🚀 ابدأ التحليل الشامل والعميق للقصيدة بالكامل"):
     st.subheader("🧠 الشرح الأكاديمي والتحليل البلاغي والعروضي المفصل")
     
-    # جلب مفتاح التشغيل السري من الخلفية
     api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
     
     if not api_key:
         st.error("⚠️ نظام الحماية السري قيد الإعداد على السيرفر، يرجى وضع المفتاح في لوحة التحكم.")
     else:
         try:
-            # تهيئة عميل جوجل بالربط المباشر
             client = genai.Client(api_key=api_key)
             prompt = get_poetry_analysis_prompt(poem_input)
             
             with st.spinner("جاري قراءة القصيدة وتحليلها بسرعة..."):
                 response = client.models.generate_content(
-                    model='gemini-3.5-flash-lite',
+                    model='gemini-2.5-flash',  # العودة إلى موديلك السريع والأساسي
                     contents=prompt,
                 )
-                
-                analysis_result = response.text
-                st.markdown(analysis_result)
-                st.divider()
-                
-                # أدوات التقرير المساعدة للمستخدم
-                st.subheader("🛠️ أدوات التقرير")
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.download_button(
-                        label="📥 تحميل التقرير كملف نصي (TXT)",
-                        data=analysis_result,
-                        file_name="تحليل_القصيدة.txt",
-                        mime="text/plain"
-                    )
-                
-                with col2:
-                    st.info("💡 يمكنك نسخ النص بالكامل مباشرة عبر الضغط على أيقونة النسخ التي تظهر أعلى زاوية مربع النص التالي:")
-                    st.text_area("نص التحليل القابل للنسخ السريع:", value=analysis_result, height=150)
+                st.session_state.analysis_output = response.text
                 
         except Exception as e:
             st.error(f"❌ حدث خطأ أثناء الاتصال : {str(e)}")
 
+# عرض النتائج وأدوات التقرير في حال وجود تحليل مخزن
+if st.session_state.analysis_output:
+    st.markdown(st.session_state.analysis_output)
+    st.divider()
+    
+    # عزل أزرار التحميل فقط حتى لا تعيد معالجة النص بأكمله وتسبب البطء
+    @st.fragment
+    def report_tools():
+        st.subheader("🛠️ أدوات التقرير")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.download_button(
+                label="📥 تحميل التقرير كملف نصي (TXT)",
+                data=st.session_state.analysis_output,
+                file_name="تحليل_القصيدة.txt",
+                mime="text/plain"
+            )
+        
+        with col2:
+            st.info("💡 يمكنك نسخ النص بالكامل مباشرة عبر الضغط على أيقونة النسخ التي تظهر أعلى زاوية مربع النص التالي:")
+            st.text_area("نص التحليل القابل للنسخ السريع:", value=st.session_state.analysis_output, height=150)
+            
+    report_tools()
+
 st.divider()
 st.write("صُنع بكفاءه برمجيه عاليه لخدمة الشعراء والنقاد بواسطة المبرمج محمد النجري 💻")
-
-# =====================================================================
-# 3. كود السماح لقوقل بقراءة ملف التحقق الساكن (HTML Verification)
-# =====================================================================
-google_file_name = "google8cb1e8b8085e0afc.html"
-
-if os.path.exists(google_file_name):
-    with open(google_file_name, "r") as f:
-        html_content = f.read()
-    st.markdown(f'<div style="display:none;">{html_content}</div>', unsafe_allow_html=True)
-
