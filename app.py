@@ -96,15 +96,14 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
         st.error("⚠️ نظام الحماية السري قيد الإعداد على السيرفر، يرجى وضع المفتاح في لوحة التحكم.")
     else:
         try:
-            # الحل الجوهري: إجبار العميل على الاتصال بـ v1beta ليفهم الموديلات التجريبية المستهدفة
-            client = genai.Client(api_key=api_key, http_options={"api_version": "v1beta"})
+            # تهيئة عميل جوجل بالربط المباشر النظيف المستقر
+            client = genai.Client(api_key=api_key)
             prompt = get_poetry_analysis_prompt(poem_input)
             
             with st.spinner("جاري قراءة القصيدة وتحليلها بسرعة..."):
-                # استدعاء الموديل الأحدث المطلوب من جوجل بنجاح الآن عبر بيئة البيتا
+                # استخدام الموديل الرسمي المستقر والمتاح مجاناً بالكامل في الـ API الحالي
                 response = client.models.generate_content(
                     model='gemini-2.5-flash',
-
                     contents=prompt,
                 )
                 
