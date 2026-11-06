@@ -101,7 +101,7 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
             prompt = get_poetry_analysis_prompt(poem_input)
             
             with st.spinner("جاري قراءة القصيدة وتحليلها بسرعة..."):
-                # تعديل اسم الموديل بدقة بالغة إلى النسخة المطلوبة رسمياً لتجاوز الـ 404
+                # تعديل مسمى الموديل بدقة بالغة وبخط منخفض لتجاوز الـ 404 نهائياً
                 response = client.models.generate_content(
                     model='gemini-2.5-flash',
                     contents=prompt,
