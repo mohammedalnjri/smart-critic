@@ -29,6 +29,15 @@ st.set_page_config(
     page_title="نظام الناقد الذكي الفائق - google-site-verification=I2lRbvk9y_t28q_uNFz0ITo4q0GEs-PdkxBr69zLBSA ",
     layout="wide"
 )
+st.html(f"""
+<script async src="https://googletagmanager.com{st.secrets.get('GOOGLE_ANALYTICS_ID', '')}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){{dataLayer.push(arguments);}}
+  gtag('js', new Date());
+  gtag('config', '{st.secrets.get('GOOGLE_ANALYTICS_ID', '')}');
+</script>
+""")
 
 # طريقة بديلة لحقن الرمز داخل جسم الصفحة الخارجي
 st.html('<meta name="google-site-verification" content="I2lRbvk9y_t28q_uNFz0ITo4q0GEs-PdkxBr69zLBSA" />')
