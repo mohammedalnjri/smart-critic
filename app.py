@@ -19,21 +19,16 @@ def get_poetry_analysis_prompt(poem_text):
     """
 
 # =====================================================================
-# 2. واجهة المستخدم الرسومية المستقرة والنظيفة (RTL)
+# 2. واجهة المستخدم الرسومية المستقرة والنظيفة والتصديق في قوقل
 # =====================================================================
+# وضعت لك الرمز السري هنا مباشرة في عنوان المتصفح ليقرأه قوقل فوراً قبل تحميل السيرفر
 st.set_page_config(
-    page_title="نظام الناقد الذكي الفائق",
-    layout="wide",
-    menu_items={
-        'About': "نظام الناقد الذكي من تطوير المبرمج محمد النجري"
-    }
+    page_title="نظام الناقد الذكي الفائق - google-site-verification=I2lRbvk9y_t28q_uNFz0ITo4q0GEs-PdkxBr69zLBSA ",
+    layout="wide"
 )
-st.write('<p style="display:none;"><meta name="google-site-verification" content=" I2lRbvk9y_t28q_uNFz0ITo4q0GEs-PdkxBr69zLBSA" /></p>', unsafe_allow_html=True)
 
-
-# 🛠️ كود التحقق المخفي المضمون لـ Google Search Console
-# ملاحظة: ضع رمز قوقل السري المنسوخ بدلاً من كلمة (ضع_الرمز_السري_هنا) مع ترك علامات الاقتباس
-st.write('<p style="display:none;"><meta name="google-site-verification" content="ضع_الرمز_السري_هنا" /></p>', unsafe_allow_html=True)
+# طريقة بديلة لحقن الرمز داخل جسم الصفحة الخارجي
+st.markdown('<p style="display:none;"><meta name="google-site-verification" content="اكتب_الرمز_السرّي_هنا" /></p>', unsafe_allow_html=True)
 
 st.title("✒️ نظام الناقد الذكي لتحليل وشرح القصائد")
 st.write("### فكرة وتطوير المبرمج محمد النِجْري ✨")
@@ -71,10 +66,7 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
                 )
                 
                 analysis_result = response.text
-                
-                # عرض النتيجة منسقة بـ Markdown للمستخدم
                 st.markdown(analysis_result)
-                
                 st.divider()
                 
                 # أدوات التقرير المساعدة للمستخدم
@@ -82,7 +74,6 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    # زر لتحميل التحليل كملف نصي منسق
                     st.download_button(
                         label="📥 تحميل التقرير كملف نصي (TXT)",
                         data=analysis_result,
@@ -91,12 +82,11 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
                     )
                 
                 with col2:
-                    # خاصية النسخ المباشر المدمجة
                     st.info("💡 يمكنك نسخ النص بالكامل مباشرة عبر الضغط على أيقونة النسخ التي تظهر أعلى زاوية مربع النص التالي:")
                     st.text_area("نص التحليل القابل للنسخ السريع:", value=analysis_result, height=150)
                 
         except Exception as e:
-            st.error(f"❌ حدث خطأ أثناء الاتصال : {str(e)}")
+            st.error(f"❌ حدث خطأ أثناء الاتصال بعقل الذكاء الاصطناعي: {str(e)}")
 
 st.divider()
-st.write("صُنع بكفاءه برمجيه عاليه لخدمة الشعراء والنقاد بواسطة المبرمج محمد عبدالله قايد النجري 💻")
+st.write("صُنع بكفاءة برمجية عالية لخدمة لغة الضاد بواسطة المبرمج محمد النِجْري 💻")
