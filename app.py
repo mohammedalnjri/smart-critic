@@ -90,3 +90,13 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
 
 st.divider()
 st.write("صُنع بكفاءة برمجية عالية لخدمة لغة الضاد بواسطة المبرمج محمد النِجْري 💻")
+
+# =====================================================================
+# 3. كود السماح لقوقل بقراءة ملف التحقق الساكن (HTML Verification)
+# =====================================================================
+google_file_name = "google8cb1e8b8085e0afc.html"
+
+if os.path.exists(google_file_name):
+    with open(google_file_name, "r") as f:
+        html_content = f.read()
+    st.markdown(f'<div style="display:none;">{html_content}</div>', unsafe_allow_html=True)
