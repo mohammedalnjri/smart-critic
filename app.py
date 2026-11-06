@@ -1,4 +1,6 @@
 import os
+os.environ["STREAMLIT_SERVER_STATIC_FILE_PATH"] = "static"
+
 import streamlit as st
 from google import genai
 
