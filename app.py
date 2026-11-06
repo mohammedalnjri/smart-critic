@@ -28,7 +28,7 @@ st.set_page_config(
 )
 
 # طريقة بديلة لحقن الرمز داخل جسم الصفحة الخارجي
-st.markdown('<p style="display:none;"><meta name="google-site-verification" content="اكتب_الرمز_السرّي_هنا" /></p>', unsafe_allow_html=True)
+st.markdown('<p style="display:none;"><meta name="google-site-verification" content=" I2lRbvk9y_t28q_uNFz0ITo4q0GEs-PdkxBr69zLBSA" /></p>', unsafe_allow_html=True)
 
 st.title("✒️ نظام الناقد الذكي لتحليل وشرح القصائد")
 st.write("### فكرة وتطوير المبرمج محمد النِجْري ✨")
