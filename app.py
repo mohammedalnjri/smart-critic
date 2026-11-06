@@ -28,6 +28,8 @@ st.set_page_config(
         'About': "نظام الناقد الذكي من تطوير المبرمج محمد النجري"
     }
 )
+st.write('<p style="display:none;"><meta name="google-site-verification" content=" I2lRbvk9y_t28q_uNFz0ITo4q0GEs-PdkxBr69zLBSA" /></p>', unsafe_allow_html=True)
+
 
 # 🛠️ كود التحقق المخفي المضمون لـ Google Search Console
 # ملاحظة: ضع رمز قوقل السري المنسوخ بدلاً من كلمة (ضع_الرمز_السري_هنا) مع ترك علامات الاقتباس
