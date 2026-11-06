@@ -60,6 +60,7 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
             prompt = get_poetry_analysis_prompt(poem_input)
             
             with st.spinner("جاري قراءة القصيدة وتحليلها بسرعة..."):
+                # استخدام اسم الموديل المستقر والمدعوم رسمياً في مكتبة google-genai الحديثة
                 response = client.models.generate_content(
                     model='gemini-2.5-flash',
                     contents=prompt,
