@@ -22,6 +22,8 @@ def get_poetry_analysis_prompt(poem_text):
 # 2. واجهة المستخدم الرسومية المستقرة والنظيفة (RTL)
 # =====================================================================
 st.set_page_config(page_title="نظام الناقد الذكي الفائق", layout="wide")
+st.markdown('<meta name="google-site-verification" content=" I2lRbvk9y_t28q_uNFz0ITo4q0GEs-PdkxBr69zLBSA " />', unsafe_allow_html=True)
+
 
 st.title("✒️ نظام الناقد الذكي لتحليل وشرح القصائد")
 st.write("### فكرة وتطوير المبرمج محمد النِجْري ✨")
