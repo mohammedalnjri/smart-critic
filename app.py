@@ -101,4 +101,3 @@ if os.path.exists(google_file_name):
         html_content = f.read()
     st.markdown(f'<div style="display:none;">{html_content}</div>', unsafe_allow_html=True)
 
-هذا هو الكود في gethup
