@@ -76,7 +76,8 @@ def process_and_display_analysis(poem_text):
             with st.spinner("جاري قراءة القصيدة وتحليلها بسرعة..."):
                 # استخدام الموديل المستقر المعتمد
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash',
+                    model='gemini-3.8-flash',
+
                     contents=prompt,
                 )
                 
