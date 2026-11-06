@@ -101,7 +101,7 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
             prompt = get_poetry_analysis_prompt(poem_input)
             
             with st.spinner("جاري قراءة القصيدة وتحليلها بسرعة..."):
-                # استخدام الموديل المستقر المعتمد حالياً لتجنب أخطاء الـ 404 والـ 503
+                # تعديل اسم الموديل بدقة بالغة إلى النسخة المطلوبة رسمياً لتجاوز الـ 404
                 response = client.models.generate_content(
                     model='gemini-2.5-flash',
                     contents=prompt,
@@ -117,7 +117,7 @@ if st.session_state.analysis_output:
     st.markdown(st.session_state.analysis_output)
     st.divider()
     
-    # عزل أدوات التقرير لمنع إعادة تحميل الصفحة وضمان استقرار الكود الخارق
+    # عزل أدوات التقرير لمنع إعادة تحميل الصفحة وضمان استقرار الكود
     @st.fragment
     def report_tools():
         st.subheader("🛠️ أدوات التقرير")
