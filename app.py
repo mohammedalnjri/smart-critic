@@ -44,8 +44,8 @@ default_poem = "عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي �
 
 poem_input = st.text_area("أدخل أبيات القصيدة (كل بيت في سطر منفصل):", value=default_poem, height=250)
 
-# استخدام الـ Session State لحفظ النتيجة لمنع اختفائها عند استخدام أزرار التحميل والنسخ
-if "analysis_output" not def st.session_state:
+# إصلاح السطر: التحقق من وجود المفتاح بشكل صحيح في الـ Session State
+if "analysis_output" not in st.session_state:
     st.session_state.analysis_output = ""
 
 if st.button("🚀 ابدأ التحليل الشامل والعميق للقصيدة بالكامل"):
@@ -62,7 +62,7 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
             
             with st.spinner("جاري قراءة القصيدة وتحليلها بسرعة..."):
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash',  # العودة إلى موديلك السريع والأساسي
+                    model='gemini-2.5-flash',
                     contents=prompt,
                 )
                 st.session_state.analysis_output = response.text
