@@ -113,7 +113,8 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
             
             with st.spinner("جاري قراءة القصيدة وتحليلها بسرعة..."):
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash', # في حال كنت تستخدم مكتبة قديمة
+                    model='gemini-3.8-flash',
+
 
 
                     contents=prompt,
