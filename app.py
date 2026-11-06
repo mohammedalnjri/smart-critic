@@ -31,7 +31,7 @@ st.set_page_config(
 st.markdown('<p style="display:none;"><meta name="google-site-verification" content=" I2lRbvk9y_t28q_uNFz0ITo4q0GEs-PdkxBr69zLBSA" /></p>', unsafe_allow_html=True)
 
 st.title("✒️ نظام الناقد الذكي لتحليل وشرح القصائد")
-st.write("### فكرة وتطوير المبرمج محمد النِجْري ✨")
+st.write("### فكرة وتطوير المبرمج محمد النجري ✨")
 
 with st.sidebar:
     st.header("⚙️ إعدادات النظام")
