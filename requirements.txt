@@ -1,3 +1,7 @@
 streamlit
 google-genai
 pyarabic
+reportlab
+arabic_reshaper
+python-bidi
+
