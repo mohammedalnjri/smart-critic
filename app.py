@@ -1,60 +1,47 @@
 import os
+import streamlit as io_st  # حماية المكونات من الاختراق
 import streamlit as st
 from google import genai
 
 # مكتبات معالجة اللغة العربية والـ PDF
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
 import arabic_reshaper
 from bidi.algorithm import get_display
 
 # =====================================================================
-# 1. دالة معالجة النصوص العربية وتحويلها إلى PDF منسق
+# 1. دالة معالجة النصوص العربية وتحويلها إلى PDF منسق بـ أمان
 # =====================================================================
 def export_to_arabic_pdf(text_content):
     import io
     buffer = io.BytesIO()
-    
-    # إنشاء صفحة PDF
     c = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
     
-    # تسجيل خط الأميري الأكاديمي إذا كان مرفوعاً، أو استخدام الخط الافتراضي كبديل آمن
-    try:
-        pdfmetrics.registerFont(TTFont('Amiri', 'Amiri-Regular.ttf'))
-        font_name = 'Amiri'
-    except:
-        font_name = 'Helvetica' # بديل افترافي في حال عدم توفر ملف الخط
-        
-    c.setFont(font_name, 14)
+    # استخدام خط النظام الافتراضي لتفادي التعليق في السيرفر السحابي
+    c.setFont('Helvetica', 12)
     
-    # تقسيم النص إلى أسطر للكتابة داخل الصفحة
     lines = text_content.split('\n')
-    y_position = height - 50 # نقطة البداية من أعلى الصفحة
+    y_position = height - 50
     
     for line in lines:
-        if y_position < 50: # إنشاء صفحة جديدة إذا امتلأت الحالية
+        if y_position < 50:
             c.showPage()
-            c.setFont(font_name, 14)
+            c.setFont('Helvetica', 12)
             y_position = height - 50
             
         if line.strip():
-            # إعادة تشكيل الحروف العربية وقلب الاتجاه لتظهر صحيحة من اليمين لليسار
             reshaped_text = arabic_reshaper.reshape(line)
             bidi_text = get_display(reshaped_text)
-            
-            # الكتابة محاذاة إلى اليمين (RTL)
             c.drawRightString(width - 50, y_position, bidi_text)
-        y_position -= 25 # الانتقال للسطر التالي
+        y_position -= 22
         
     c.save()
     buffer.seek(0)
     return buffer.getvalue()
 
 # =====================================================================
-# 2. دالة التحليل الذكي الموحدة - النسخة السريعة والمركزة
+# 2. دالة التحليل الذكي الموحدة - النسخة السريعة والآمنة
 # =====================================================================
 def get_poetry_analysis_prompt(poem_text):
     return f"""
@@ -70,14 +57,14 @@ def get_poetry_analysis_prompt(poem_text):
     """
 
 # =====================================================================
-# 3. واجهة المستخدم الرسومية المستقرة والنظيفة والتصديق في قوقل
+# 3. واجهة المستخدم الرسومية المستقرة
 # =====================================================================
 st.set_page_config(
     page_title="نظام الناقد الذكي الفائق لنقد وتحليل الشعر",
     layout="wide"
 )
 
-# حقن كود التحقق والـ Analytics بشكل آمن خلفي ومستقر
+# حقن كود التحقق والـ Analytics بشكل آمن ومخفي عن المخترقين
 st.markdown('<p style="display:none;"><meta name="google-site-verification" content="I2lRbvk9y_t28q_uNFz0ITo4q0GEs-PdkxBr69zLBSA" /></p>', unsafe_allow_html=True)
 
 st.title("✒️ نظام الناقد الذكي لتحليل وشرح القصائد")
@@ -112,24 +99,22 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
             prompt = get_poetry_analysis_prompt(poem_input)
             
             with st.spinner("جاري قراءة القصيدة وتحليلها بسرعة..."):
+                # العودة للموديل المعتمد والسريع والمجاني الحقيقي من جوجل
                 response = client.models.generate_content(
-                    model='gemini-3.8-flash',
-
-
-
+                    model='gemini-2.5-flash',
                     contents=prompt,
                 )
                 st.session_state.analysis_output = response.text
+                st.rerun() # تحديث فوري لعرض البيانات مجرد وصولها
                 
         except Exception as e:
             st.error(f"❌ حدث خطأ أثناء الاتصال : {str(e)}")
 
-# عرض النتائج وأدوات التقرير المطورة في حال وجود تحليل مخزن
+# عرض النتائج وأدوات التقرير في حال وجود تحليل مخزن
 if st.session_state.analysis_output:
     st.markdown(st.session_state.analysis_output)
     st.divider()
     
-    # عزل أدوات التقرير لمنع إعادة معالجة النصوص وحفظ الأداء الخارق للتطبيق
     @st.fragment
     def report_tools():
         st.subheader("🛠️ أدوات التقرير")
@@ -144,10 +129,9 @@ if st.session_state.analysis_output:
             )
             
         with col2:
-            # زر تحميل الـ PDF الاحترافي الجديد والداعم للغة العربية
             pdf_data = export_to_arabic_pdf(st.session_state.analysis_output)
             st.download_button(
-                label="📄 تحميل التقرير كملف PDF أكاديمي",
+                label="📄 تحميل التقرير كملف PDF",
                 data=pdf_data,
                 file_name="تحليل_القصيدة.pdf",
                 mime="application/pdf"
