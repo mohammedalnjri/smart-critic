@@ -54,14 +54,14 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
         st.error("⚠️ نظام الحماية السري قيد الإعداد على السيرفر، يرجى وضع المفتاح في لوحة التحكم.")
     else:
         try:
-            # تهيئة عميل جوجل بالربط المباشر
+            # تهيئة عميل جوجل بالربط المباشر للمكتبة الجديدة
             client = genai.Client(api_key=api_key)
             prompt = get_poetry_analysis_prompt(poem_input)
             
             with st.spinner("جاري قراءة القصيدة وتحليلها بسرعة..."):
-                # تعديل اسم الموديل إلى المسمى الشامل المتوافق مع مكتبة google-genai الحديثة لمنع الـ 404
+                # استخدام المسمى الصافي والمدعوم رسمياً في مكتبة google-genai الحديثة
                 response = client.models.generate_content(
-                    model='gemini-1.5-flash',
+                    model='gemini-2.5-flash',
                     contents=prompt,
                 )
                 
