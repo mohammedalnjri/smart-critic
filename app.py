@@ -21,9 +21,17 @@ def get_poetry_analysis_prompt(poem_text):
 # =====================================================================
 # 2. واجهة المستخدم الرسومية المستقرة والنظيفة (RTL)
 # =====================================================================
-st.set_page_config(page_title="نظام الناقد الذكي الفائق", layout="wide")
-st.markdown('<meta name="google-site-verification" content=" I2lRbvk9y_t28q_uNFz0ITo4q0GEs-PdkxBr69zLBSA " />', unsafe_allow_html=True)
+st.set_page_config(
+    page_title="نظام الناقد الذكي الفائق",
+    layout="wide",
+    menu_items={
+        'About': "نظام الناقد الذكي من تطوير المبرمج محمد النجري"
+    }
+)
 
+# 🛠️ كود التحقق المخفي المضمون لـ Google Search Console
+# ملاحظة: ضع رمز قوقل السري المنسوخ بدلاً من كلمة (ضع_الرمز_السري_هنا) مع ترك علامات الاقتباس
+st.write('<p style="display:none;"><meta name="google-site-verification" content="ضع_الرمز_السري_هنا" /></p>', unsafe_allow_html=True)
 
 st.title("✒️ نظام الناقد الذكي لتحليل وشرح القصائد")
 st.write("### فكرة وتطوير المبرمج محمد النِجْري ✨")
@@ -55,7 +63,6 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
             prompt = get_poetry_analysis_prompt(poem_input)
             
             with st.spinner("جاري قراءة القصيدة وتحليلها بسرعة..."):
-                # استخدام النموذج فائق السرعة والمتاح حالياً لتفادي أي بطء أو تعليق
                 response = client.models.generate_content(
                     model='gemini-3.5-flash-lite',
                     contents=prompt,
@@ -90,4 +97,4 @@ if st.button("🚀 ابدأ التحليل الشامل والعميق للقص�
             st.error(f"❌ حدث خطأ أثناء الاتصال : {str(e)}")
 
 st.divider()
-st.write("صُنع بكفاءة برمجية عالية لخدمة الشعراء والادباء بواسطة المبرمج محمد النِجْري 💻")
+st.write("صُنع بكفاءه برمجيه عاليه لخدمة الشعراء والنقاد بواسطة المبرمج محمد عبدالله قايد النجري 💻")
