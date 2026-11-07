@@ -3,16 +3,20 @@ import streamlit as st
 from google import genai
 
 
-# كود إخفاء أيقونة التاج والشريط السفلي والقائمة الافتراضية
+# كود نهائي ومحدث لإخفاء الأيقونة والشريط السفلي بالكامل
 hide_streamlit_style = """
             <style>
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
             header {visibility: hidden;}
-            .stAppDeployButton {display: none;}
+            [data-testid="stStatusWidget"] {visibility: hidden;}
+            .stAppDeployButton {display: none !important;}
+            div[data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+            footer {clear: both; position: relative; height: 0px; visibility: hidden; display: none !important;}
             </style>
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 
 
 # =====================================================================
