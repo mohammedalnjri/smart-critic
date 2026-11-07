@@ -2,6 +2,19 @@ import os
 import streamlit as st
 from google import genai
 
+
+# كود إخفاء أيقونة التاج والشريط السفلي والقائمة الافتراضية
+hide_streamlit_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            .stAppDeployButton {display: none;}
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+
 # =====================================================================
 # 1. دالة التحليل الذكي الموحدة - النسخة السريعة والمركزة
 # =====================================================================
