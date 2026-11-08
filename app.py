@@ -2,20 +2,32 @@ import os
 import streamlit as st
 from google import genai
 
-
-# كود نهائي ومحدث لإخفاء الأيقونة والشريط السفلي بالكامل
-hide_streamlit_style = """
+# كود مسح الأيقونة الزرقاء وشعار وعلامات منصة الاستضافة تماماً
+hide_all_widgets = """
             <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            header {visibility: hidden;}
-            [data-testid="stStatusWidget"] {visibility: hidden;}
-            .stAppDeployButton {display: none !important;}
-            div[data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
-            footer {clear: both; position: relative; height: 0px; visibility: hidden; display: none !important;}
+            /* إخفاء الأيقونة الزرقاء والعناصر العائمة */
+            [data-testid="stStatusWidget"], .stStatusWidget, [data-testid="stHeaderActionElements"] {
+                display: none !important;
+                visibility: hidden !important;
+            }
+            /* إخفاء شعار Streamlit والشريط الأحمر بالكامل */
+            footer, .stAppDeployButton, header {
+                display: none !important;
+                visibility: hidden !important;
+                height: 0px !important;
+            }
+            /* تنظيف شريط الأدوات الافتراضي */
+            div[data-testid="stToolbar"] {
+                display: none !important;
+                visibility: hidden !important;
+            }
+            #MainMenu {
+                visibility: hidden !important;
+            }
             </style>
             """
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+st.markdown(hide_all_widgets, unsafe_allow_html=True)
+
 
 
 
