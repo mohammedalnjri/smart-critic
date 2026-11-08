@@ -2,31 +2,6 @@ import os
 import streamlit as st
 from google import genai
 
-# كود مسح الأيقونة الزرقاء وشعار وعلامات منصة الاستضافة تماماً
-hide_all_widgets = """
-            <style>
-            /* إخفاء الأيقونة الزرقاء والعناصر العائمة */
-            [data-testid="stStatusWidget"], .stStatusWidget, [data-testid="stHeaderActionElements"] {
-                display: none !important;
-                visibility: hidden !important;
-            }
-            /* إخفاء شعار Streamlit والشريط الأحمر بالكامل */
-            footer, .stAppDeployButton, header {
-                display: none !important;
-                visibility: hidden !important;
-                height: 0px !important;
-            }
-            /* تنظيف شريط الأدوات الافتراضي */
-            div[data-testid="stToolbar"] {
-                display: none !important;
-                visibility: hidden !important;
-            }
-            #MainMenu {
-                visibility: hidden !important;
-            }
-            </style>
-            """
-st.markdown(hide_all_widgets, unsafe_allow_html=True)
 
 
 
