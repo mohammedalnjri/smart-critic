@@ -50,7 +50,7 @@ default_poem = "عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي �
 poem_input = st.text_area("أدخل أبيات القصيدة (كل بيت في سطر منفصل):", value=default_poem, height=250)
 
 if st.button("🚀 ابدأ التحليل الشامل والعميق للقصيدة بالكامل"):
-    st.subheader("🧠 الشرح الأكاديمي والتحليل البلاغي والعروضي المفصل")
+    st.subheader(" الشرح الأكاديمي والتحليل البلاغي والعروضي المفصل")
     
     # جلب مفتاح التشغيل السري من الخلفية
     api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
