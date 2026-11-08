@@ -106,30 +106,3 @@ if os.path.exists(google_file_name):
     st.markdown(f'<div style="display:none;">{html_content}</div>', unsafe_allow_html=True)
 
 
-
-
-# كود نهائي في أسفل الملف لإجبار المتصفح على إخفاء الأيقونات
-st.markdown("""
-    <style>
-    /* إخفاء الأيقونة الزرقاء والرموز العائمة */
-    [data-testid="stStatusWidget"], .stStatusWidget, [data-testid="stHeaderActionElements"] {
-        display: none !important;
-        visibility: hidden !important;
-    }
-    /* إخفاء شعار Streamlit والشريط الأحمر بالكامل */
-    footer, .stAppDeployButton, header {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0px !important;
-    }
-    /* تنظيف شريط الأدوات الافتراضي */
-    div[data-testid="stToolbar"] {
-        display: none !important;
-        visibility: hidden !important;
-    }
-    #MainMenu {
-        visibility: hidden !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
