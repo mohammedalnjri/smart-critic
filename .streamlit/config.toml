@@ -1,3 +1,10 @@
 [server]
 enableCORS = false
 enableXsrfProtection = false
+
+[client]
+showErrorDetails = false
+toolbarMode = "viewer"
+
+[ui]
+hideTopBar = true
