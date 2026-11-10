@@ -12,7 +12,7 @@ st.set_page_config(
 st.title("🤖 منصة الناقد الذكي - Smart Critic")
 # إضافة اسم المبرمج المصمم بشكل منسق وجذاب تحت العنوان مباشرة
 st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; margin-top: -15px;'>🎨 تصميم المبرمج محمد النجري</p>", unsafe_allow_html=True)
-st.subheader("التحليل الأدبي والعروضي الصارم بالذكاء الاصطناعي الأكاديمي")
+st.subheader("التحليل الأدبي والعروضي الصارم بأحدث التقنيات البرمجيه ")
 
 # 2. جلب المفتاح تلقائياً من إعدادات الـ Secrets
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
