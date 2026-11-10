@@ -1,5 +1,5 @@
 streamlit>=1.35.0
-groq
+google-generativeai
 reportlab
 arabic_reshaper
 python-bidi
