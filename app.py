@@ -2,6 +2,7 @@ import streamlit as st
 import os
 from groq import Groq
 
+# 1. إعداد الصفحة والواجهة الاحترافية للموقع
 st.set_page_config(
     page_title="Smart Critic - الناقد الذكي",
     page_icon="📚",
@@ -11,9 +12,11 @@ st.set_page_config(
 st.title("🤖 منصة الناقد الذكي - Smart Critic")
 st.subheader("التحليل الأدبي والعروضي الصارم بالذكاء الاصطناعي الأكاديمي")
 
+# 2. جلب المفتاح تلقائياً من إعدادات الـ Secrets
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
 if GROQ_API_KEY:
+    # 3. واجهة المراجع والملفات
     st.write("---")
     st.markdown("### 📚 1. المراجع والنصوص المراد تحليلها")
     uploaded_file = st.file_uploader("ارفع الملف أو المرجع العربي (TXT أو PDF):", type=["txt", "pdf"])
@@ -26,6 +29,7 @@ if GROQ_API_KEY:
         except Exception as e:
             st.error(f"خطأ في قراءة الملف: {e}")
 
+    # 4. حقل التوجيهات النظيف والمنقح
     st.write("---")
     st.markdown("### ✍️ 2. توجيهات الناقد الذكي")
     user_prompt = st.text_area(
@@ -33,6 +37,7 @@ if GROQ_API_KEY:
         value="عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي العَزائِمُ\nوَتَأتِي عَلَى قَدْرِ الكِرامِ المَكارِمُ"
     )
 
+    # 5. معالجة الطلب وعرض النتيجة الكاملة والعروضية وثبات التفصيل
     if st.button("🚀 ابدأ النقد الأدبي والعروضي الموثق"):
         if not user_prompt:
             st.error("الرجاء كتابة التوجيه أو السؤال أولاً!")
@@ -41,7 +46,6 @@ if GROQ_API_KEY:
                 try:
                     client = Groq(api_key=GROQ_API_KEY)
                     
-                    # صياغة أشد صرامة لضمان الطول والتفصيل ومنع العقوم والاختصار اللحظي
                     full_prompt = f"""
                     أنت بروفيسور وعلامة متخصص في الأدب العربي القديم وعلم العروض والقافية وفق مدرسة الخليل بن أحمد الفراهيدي.
                     
@@ -64,10 +68,10 @@ if GROQ_API_KEY:
                             {"role": "user", "content": full_prompt}
                         ],
                         model="openai/gpt-oss-20b",
-                        temperature=0.2, # تم خفض العشوائية برمجياً هنا ليصبح الموديل عقلانياً ومفصلاً في كل مرة
+                        temperature=0.2, # لضمان إجابة عقلانية ومفصلة في كل مرة ومنع الاختصارات العقيمة
                     )
                     
-                    # التصحيح النهائي والقاطع لسطر القراءة لمنع خطأ الـ list والأعداد نهائياً
+                    # تم إصلاح هذا السطر البرمجي الحاسم بدقة تامة لقراءة وطباعة النص كاملاً
                     st.write("---")
                     st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
                     st.write(chat_completion.choices[0].message.content)
