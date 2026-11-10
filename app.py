@@ -64,7 +64,7 @@ if GROQ_API_KEY:
                                 "content": full_prompt,
                             }
                         ],
-                        model="llama-3.1-8b-instant",
+                        model="llama3-70b-8192",
                     )
                     
                     st.write("---")
