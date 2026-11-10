@@ -1,6 +1,8 @@
 import streamlit as st
 import os
+import time
 from google import genai
+from google.genai.errors import APIError
 
 # 1. إعداد الصفحة والواجهة الاحترافية للموقع
 st.set_page_config(
@@ -40,39 +42,44 @@ if GEMINI_API_KEY:
         value="عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي العَزائِمُ\nوَتَأتِي عَلَى قَدْرِ الكِرامِ المَكارِمُ"
     )
 
-    # 5. معالجة الطلب الآمن والمباشر
+    # 5. معالجة الطلب الآمن والمباشر بدون رسائل جانبية وبدعم إعادة المحاولة عند الضغط
     if st.button("🚀 ابدأ التحليل والنقد الفوري"):
         if not user_prompt:
             st.error("الرجاء كتابة التوجيه أو السؤال أولاً!")
         else:
-            status_text = st.empty()
-            status_text.markdown("🔄 *جاري تهيئة الاتصال بالخادم السحابي...*")
-            
-            try:
-                # تهيئة العميل
+            # استخدام شريط التحميل الأصلي لـ Streamlit فقط وبدون أي نصوص برمجية إضافية
+            with st.spinner(""): 
                 client = genai.Client(api_key=GEMINI_API_KEY)
                 
                 full_prompt = f"""
                 أنت خبير ناقد أكاديمي متخصص في الأدب العربي.
                 السياق أو المرجع المتاح: {context_content if context_content else 'اعتمد على معارفك الأدبية العامة.'}
-                المطلوب منك: قم بتحليل ونقد النص التالي نقداً أدبياً وبلاغياً وافياً: {user_prompt}
+                المطلوب منك: قم بتحليل ونقد النص التالي نقداً أدبياً وبلاغياً وافياً بأسلوب فصيح وممتاز: {user_prompt}
                 """
                 
-                status_text.markdown("⚡ *جاري استخلاص النقد الأدبي عبر طراز Gemini 3.8 الحديث...*")
-                
-                # استخدام الطراز المعتمد الجديد لحسابك بشكل نهائي وقاطع
-                response = client.models.generate_content(
-                    model='gemini-3.8-flash',
-                    contents=full_prompt,
-                )
-                
-                status_text.empty()
-                st.write("---")
-                st.markdown("### ✨ النتيجة والنقد المستخرج:")
-                st.write(response.text)
-                
-            except Exception as e:
-                status_text.empty()
-                st.error(f"⚠️ تفاصيل الخطأ: {e}")
+                # نظام ذكي لإعادة المحاولة 3 مرات تلقائياً في حال كان خادم جوجل مضغوطاً (خطأ 503)
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        response = client.models.generate_content(
+                            model='gemini-3.8-flash',
+                            contents=full_prompt,
+                        )
+                        # إذا نجح الطلب، اعرض النتيجة فوراً واكسر التكرار
+                        st.write("---")
+                        st.markdown("### ✨ النتيجة والنقد المستخرج:")
+                        st.write(response.text)
+                        break
+                    except APIError as e:
+                        # إذا كان الخطأ بسبب الضغط (503) ولم ننتهِ من المحاولات، انتظر ثانية وأعد المحاولة
+                        if e.code == 503 and attempt < max_retries - 1:
+                            time.sleep(1.5)
+                            continue
+                        else:
+                            st.error(f"⚠️ الخادم مشغول حالياً بسبب ضغط الطلبات العالي، يرجى النقر مرة أخرى بعد لحظات. (تفاصيل: {e.message})")
+                            break
+                    except Exception as e:
+                        st.error(f"⚠️ تفاصيل الخطأ: {e}")
+                        break
 else:
-    st.info("💡 للبدء، يرجى إدخال مفتاح Gemini API في القائمة الجانبية أو ضبطه كمتغير بيئي (Environment Variable).")
+    st.info("💡 للبدء، يرجى إدخل مفتاح Gemini API في القائمة الجانبية أو ضبطه كمتغير بيئي (Environment Variable).")
