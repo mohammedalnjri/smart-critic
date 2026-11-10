@@ -30,7 +30,7 @@ if GROQ_API_KEY:
         except Exception as e:
             st.error(f"خطأ في قراءة الملف: {e}")
 
-    # 4. حقل التوجيهات المنسق
+    # 4. حقل التوجيهات
     st.write("---")
     st.markdown("### ✍️ 2. توجيهات الناقد الذكي")
     user_prompt = st.text_area(
@@ -38,7 +38,7 @@ if GROQ_API_KEY:
         value="عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي العَزائِمُ\nوَتَأتِي عَلَى قَدْرِ الكِرامِ المَكارِمُ"
     )
 
-    # 5. المعالجة الأكاديمية الصارمة عبر محرك غروق المستقر والمحمي
+    # 5. معالجة الطلب وعرض النتيجة الكاملة والعروضية
     if st.button("🚀 ابدأ النقد الأدبي والعروضي الموثق"):
         if not user_prompt:
             st.error("الرجاء كتابة التوجيه أو السؤال أولاً!")
@@ -63,12 +63,12 @@ if GROQ_API_KEY:
                     رابعاً: التحليل البلاغي والجماليات.
                     """
                     
-                    # تم الانتقال هنا للنموذج الأقوى والمتاح مجاناً للغة العربية دون أي مشاكل تعليق
+                    # استدعاء الموديل الشغال الفعلي والمدعوم حالياً في السيرفر
                     chat_completion = client.chat.completions.create(
                         messages=[
                             {"role": "user", "content": full_prompt}
                         ],
-                        model="llama-3.3-70b-versatile",
+                        model="llama-3.1-8b-instant",
                         temperature=0.2,
                         max_tokens=2000
                     )
