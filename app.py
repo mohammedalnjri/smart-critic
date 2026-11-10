@@ -71,7 +71,8 @@ if GROQ_API_KEY:
                                     "content": full_prompt,
                                 }
                             ],
-                            model="llama-3.3-70b-specdec",
+                            model="llama-3.3-70b-versatile",
+
                         )
                         
                         # تم إصلاح السطر البرمجي هنا لقراءة الرد مبااشرة وبدون أخطاء القوائم المعلقة
