@@ -19,7 +19,7 @@ if not GEMINI_API_KEY:
     GEMINI_API_KEY = st.sidebar.text_input("أدخل مفتاح Gemini API المجاني الخاص بك:", type="password")
 
 if GEMINI_API_KEY:
-    # تهيئة إعدادات مكتبة جوجل المستقرة والكلاسيكية
+    # تهيئة إعدادات مكتبة جوجل المستقرة
     genai.configure(api_key=GEMINI_API_KEY)
     
     # 3. قسم رفع المراجع والملفات العربية
@@ -43,7 +43,7 @@ if GEMINI_API_KEY:
         value="عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي العَزائِمُ\nوَتَأتِي عَلَى قَدْرِ الكِرامِ المَكارِمُ"
     )
 
-    # 5. معالجة الطلب الآمن والمباشر بدون أي رسائل نصية إضافية لمنع الجمود
+    # 5. معالجة الطلب الآمن والمباشر
     if st.button("🚀 ابدأ التحليل والنقد الفوري"):
         if not user_prompt:
             st.error("الرجاء كتابة التوجيه أو السؤال أولاً!")
@@ -57,8 +57,8 @@ if GEMINI_API_KEY:
                     المطلوب منك: قم بتحليل ونقد النص التالي نقداً أدبياً وبلاغياً وافياً بأسلوب فصيح وممتاز: {user_prompt}
                     """
                     
-                    # استخدام الطراز السريع المستقر والمجاني للمكتبة الكلاسيكية
-                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    # التعديل الصحيح والقاطع هنا باستخدام طراز العصر المستقر
+                    model = genai.GenerativeModel('gemini-2.0-flash')
                     response = model.generate_content(full_prompt)
                     
                     st.write("---")
