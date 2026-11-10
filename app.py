@@ -40,17 +40,16 @@ if GEMINI_API_KEY:
         value="عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي العَزائِمُ\nوَتَأتِي عَلَى قَدْرِ الكِرامِ المَكارِمُ"
     )
 
-    # 5. معالجة الطلب الآمن والمباشر للتخلص من التعليق نهائياً
+    # 5. معالجة الطلب الآمن والمباشر
     if st.button("🚀 ابدأ التحليل والنقد الفوري"):
         if not user_prompt:
             st.error("الرجاء كتابة التوجيه أو السؤال أولاً!")
         else:
-            # إنشاء مساحة عرض نصية ديناميكية لتجنب الجمود البصري
             status_text = st.empty()
             status_text.markdown("🔄 *جاري تهيئة الاتصال بالخادم السحابي...*")
             
             try:
-                # تهيئة العميل وتحديد طراز جوجل المعتمد رسمياً للمشروعات الفورية
+                # تهيئة العميل
                 client = genai.Client(api_key=GEMINI_API_KEY)
                 
                 full_prompt = f"""
@@ -59,15 +58,14 @@ if GEMINI_API_KEY:
                 المطلوب منك: قم بتحليل ونقد النص التالي نقداً أدبياً وبلاغياً وافياً: {user_prompt}
                 """
                 
-                status_text.markdown("⚡ *جاري إرسال النص واستخلاص النقد الأدبي...*")
+                status_text.markdown("⚡ *جاري استخلاص النقد الأدبي عبر طراز Gemini 3.8 الحديث...*")
                 
-                # إرسال طلب محمي ومباشر
+                # استخدام الطراز المعتمد الجديد لحسابك بشكل نهائي وقاطع
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash',
+                    model='gemini-3.8-flash',
                     contents=full_prompt,
                 )
                 
-                # مسح نصوص التحميل وعرض النتيجة فوراً
                 status_text.empty()
                 st.write("---")
                 st.markdown("### ✨ النتيجة والنقد المستخرج:")
@@ -75,6 +73,6 @@ if GEMINI_API_KEY:
                 
             except Exception as e:
                 status_text.empty()
-                st.error(f"⚠️ فشل الاتصال التلقائي بالخادم السحابي. السبب المحتمل: صلاحية مفتاح الـ API الخاص بك أو حظر مؤقت من الخادم الرئيسي. تفاصيل الخطأ: {e}")
+                st.error(f"⚠️ تفاصيل الخطأ: {e}")
 else:
     st.info("💡 للبدء، يرجى إدخال مفتاح Gemini API في القائمة الجانبية أو ضبطه كمتغير بيئي (Environment Variable).")
