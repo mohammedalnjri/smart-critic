@@ -10,6 +10,8 @@ st.set_page_config(
 )
 
 st.title("🤖 منصة الناقد الذكي - Smart Critic")
+# إضافة اسم المبرمج المصمم بشكل منسق وجذاب تحت العنوان مباشرة
+st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; margin-top: -15px;'>🎨 تصميم المبرمج محمد النجري</p>", unsafe_allow_html=True)
 st.subheader("التحليل الأدبي والعروضي الصارم بالذكاء الاصطناعي الأكاديمي")
 
 # 2. جلب المفتاح تلقائياً من إعدادات الـ Secrets
@@ -29,7 +31,7 @@ if GROQ_API_KEY:
         except Exception as e:
             st.error(f"خطأ في قراءة الملف: {e}")
 
-    # 4. حقل التوجيهات مع تعديل سطر الإرشاد كما طلبت بدقة
+    # 4. حقل التوجيهات الإرشادي النظيف
     st.write("---")
     st.markdown("### ✍️ 2. توجيهات الناقد الذكي")
     user_prompt = st.text_area(
@@ -73,7 +75,7 @@ if GROQ_API_KEY:
                     
                     st.write("---")
                     st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
-                    st.write(chat_completion.choices[0].message.content)
+                    st.write(chat_completion.choices.message.content)
                     
                 except Exception as e:
                     st.error(f"⚠️ حدث خطأ أثناء المعالجة: {e}")
