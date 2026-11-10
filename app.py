@@ -12,7 +12,7 @@ st.set_page_config(
 st.title("🤖 منصة الناقد الذكي - Smart Critic")
 # إضافة اسم المبرمج المصمم بشكل منسق وجذاب تحت العنوان مباشرة
 st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; margin-top: -15px;'>🎨 تصميم المبرمج محمد النجري</p>", unsafe_allow_html=True)
-st.subheader( "التحليل الأدبي والعروضي الصارم بأحدث تقنيات البرمجه الحديثه")
+st.subheader("التحليل الأدبي والعروضي الصارم بالذكاء الاصطناعي الأكاديمي")
 
 # 2. جلب المفتاح تلقائياً من إعدادات الـ Secrets
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
@@ -73,9 +73,10 @@ if GROQ_API_KEY:
                         temperature=0.2,
                     )
                     
+                    # تم الإصلاح البرمجي القطعي هنا بإدراج القوس المربع [0] لقراءة البيانات بنجاح
                     st.write("---")
                     st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
-                    st.write(chat_completion.choices.message.content)
+                    st.write(chat_completion.choices[0].message.content)
                     
                 except Exception as e:
                     st.error(f"⚠️ حدث خطأ أثناء المعالجة: {e}")
