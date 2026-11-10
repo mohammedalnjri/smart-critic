@@ -67,7 +67,8 @@ if GEMINI_API_KEY:
                         """
                         
                         # استخدام النموذج الموسوعي الأقوى والأسرع في اللغة العربية
-                        model = genai.GenerativeModel('gemini-2.0-flash')
+                        model = genai.GenerativeModel('gemini-3.8-flash')
+
                         response = model.generate_content(full_prompt)
                         
                         st.write("---")
