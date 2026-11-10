@@ -73,7 +73,8 @@ if GROQ_API_KEY:
                                 "content": full_prompt,
                             }
                         ],
-                        model="llama-3.1-8b-instant",
+                        model="openai/gpt-oss-20b",
+
                     )
                     
                     # التعديل الصحيح والمضمون لقراءة النص مباشرة بدون أخطاء السقوط السابقة
