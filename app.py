@@ -68,7 +68,8 @@ if GROQ_API_KEY:
                         messages=[
                             {"role": "user", "content": full_prompt}
                         ],
-                        model="llama-3.1-8b-instant",
+                        model="llama-3.3-70b-specdec",
+
                         temperature=0.2,
                         max_tokens=2000
                     )
