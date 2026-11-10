@@ -19,12 +19,12 @@ if not GEMINI_API_KEY:
     GEMINI_API_KEY = st.sidebar.text_input("أدخل مفتاح Gemini API المجاني الخاص بك:", type="password")
 
 if GEMINI_API_KEY:
-    # تهيئة إعدادات مكتبة جوجل المستقرة
+    # تهيئة إعدادات مكتبة جوجل
     genai.configure(api_key=GEMINI_API_KEY)
     
     # 3. قسم رفع المراجع والملفات العربية
     st.write("---")
-    st.markdown("### 📚 1. المراجع والنصوص المراد تحليلها")
+    st.markdown("### 📚 1. المراجع النصوص المراد تحليلها")
     uploaded_file = st.file_uploader("ارفع الملف أو المرجع العربي (TXT أو PDF):", type=["txt", "pdf"])
     
     context_content = ""
@@ -43,7 +43,7 @@ if GEMINI_API_KEY:
         value="عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي العَزائِمُ\nوَتَأتِي عَلَى قَدْرِ الكِرامِ المَكارِمُ"
     )
 
-    # 5. معالجة الطلب الآمن والمباشر
+    # 5. معالجة الطلب المباشر بالنموذج الصحيح المطلوب من السيرفر
     if st.button("🚀 ابدأ التحليل والنقد الفوري"):
         if not user_prompt:
             st.error("الرجاء كتابة التوجيه أو السؤال أولاً!")
@@ -57,8 +57,8 @@ if GEMINI_API_KEY:
                     المطلوب منك: قم بتحليل ونقد النص التالي نقداً أدبياً وبلاغياً وافياً بأسلوب فصيح وممتاز: {user_prompt}
                     """
                     
-                    # التعديل الصحيح والقاطع هنا باستخدام طراز العصر المستقر
-                    model = genai.GenerativeModel('gemini-2.0-flash')
+                    # استدعاء الطراز المحدث والمطلوب نصاً من جوجل لحسابك
+                    model = genai.GenerativeModel('gemini-3.8-flash')
                     response = model.generate_content(full_prompt)
                     
                     st.write("---")
