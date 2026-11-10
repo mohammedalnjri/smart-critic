@@ -3,7 +3,7 @@ import os
 from groq import Groq
 
 # 1. إعداد الصفحة والواجهة
-st.set_page_config(
+st.set_config = st.set_page_config(
     page_title="Smart Critic - الناقد الذكي",
     page_icon="🤖",
     layout="centered"
@@ -37,7 +37,7 @@ if GROQ_API_KEY:
         value="عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي العَزائِمُ\nوَتَأتِي عَلَى قَدْرِ الكِرامِ المَكارِمُ"
     )
 
-    # 5. معالجة الطلب عبر الموديل الشغال والمدعوم رسمياً
+    # 5. معالجة الطلب وعرض النتيجة بشكل صحيح
     if st.button("🚀 ابدأ التحليل والنقد الفوري"):
         if not user_prompt:
             st.error("الرجاء كتابة التوجيه أو السؤال أولاً!")
@@ -52,7 +52,7 @@ if GROQ_API_KEY:
                     المطلوب منك: قم بتحليل ونقد النص التالي نقداً أدبياً وبلاغياً وافياً بأسلوب فصيح وممتاز ومحترف: {user_prompt}
                     """
                     
-                    # الموديل النشط والمدعوم رسمياً في سيرفرات غروق الحالية
+                    # استدعاء الموديل الشغال حالياً
                     chat_completion = client.chat.completions.create(
                         messages=[
                             {
@@ -61,12 +61,12 @@ if GROQ_API_KEY:
                             }
                         ],
                         model="openai/gpt-oss-20b",
-
                     )
                     
+                    # تم إصلاح السطر هنا بإضافة [0] لقراءة النص بنجاح
                     st.write("---")
                     st.markdown("### ✨ النتيجة والنقد المستخرج:")
-                    st.write(chat_completion.choices.message.content)
+                    st.write(chat_completion.choices[0].message.content)
                     
                 except Exception as e:
                     st.error(f"⚠️ حدث خطأ أثناء المعالجة: {e}")
