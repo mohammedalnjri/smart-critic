@@ -38,10 +38,12 @@ def shape_arabic(text):
     return get_display(reshaped)
 
 def create_arabic_pdf(report_text, poem_text):
-    font_path = "Amiri-Regular.ttf"
+    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
     if not os.path.exists(font_path):
-        url = "https://github.com"
-        urllib.request.urlretrieve(url, font_path)
+        font_path = "DejaVuSans.ttf"
+        if not os.path.exists(font_path):
+            urllib.request.urlretrieve("https://githubusercontent.com", font_path)
+
 
     pdf = FPDF()
     pdf.add_page()
