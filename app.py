@@ -28,7 +28,11 @@ st.subheader("التحليل الأدبي والعروضي الصارم بأحد
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 if GEMINI_API_KEY:
-    client = genai.Client(api_key=GEMINI_API_KEY)
+    # ضبط مهلة زمنية صارمة (15 ثانية كحد أقصى) لمنع تعليق الصفحة لدقيقة كاملة
+    client = genai.Client(
+        api_key=GEMINI_API_KEY,
+        http_options=types.HttpOptions(timeout=15000)
+    )
 
     st.write("---")
     st.markdown("### 📚 1. المراجع والنصوص المراد تحليلها")
@@ -108,8 +112,7 @@ if GEMINI_API_KEY:
                 response = None
                 last_error = ""
                 
-                for model_name in ["gemini-3.8-flash", "gemini-3.8-flash-lite"]:
-
+                for model_name in ["gemini-3.8-flash-lite", "gemini-3.8-flash"]:
                     try:
                         response = client.models.generate_content(
                             model=model_name,
@@ -138,6 +141,6 @@ if GEMINI_API_KEY:
                         mime="text/plain"
                     )
                 else:
-                    st.error(f"⚠️ تعذر الاتصال بالخادم حالياً: {last_error}")
+                    st.error(f"⚠️ الخادم مشغول حالياً، يرجى المحاولة مرة أخرى بعد قليل. ({last_error})")
 else:
     st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
