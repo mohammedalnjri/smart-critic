@@ -39,45 +39,36 @@ def shape_arabic(text):
 def create_arabic_pdf(report_text, poem_text):
     import matplotlib.font_manager as fm
     pdf = FPDF()
-    pdf.set_margins(10, 10, 10)
+    pdf.set_margins(12, 12, 12)
     pdf.add_page()
     
-    # جلب خط Google العربي الرسمي المشابه لشاشة المحادثة تلقائياً
     noto_path = "/usr/share/fonts/truetype/noto/NotoSansArabic-Bold.ttf"
     if not os.path.exists(noto_path):
         noto_path = fm.findfont("DejaVu Sans:weight=bold")
     pdf.add_font("GoogleArabic", "", noto_path)
     
-    # ترويسة المنصة واسم المبرمج بحجم أكبر ولون مميز
-    pdf.set_font("GoogleArabic", size=18)
+    # ترويسة المنصة واسم المبرمج بخط عربي عريض وأنيق
+    pdf.set_font("GoogleArabic", size=19)
     pdf.set_text_color(20, 80, 160)
-    pdf.set_x(10)
-    pdf.multi_cell(190, 11, shape_arabic("منصة الناقد الذكي"), align="C")
+    pdf.set_x(12)
+    pdf.multi_cell(186, 11, shape_arabic("منصة الناقد الذكي للتحليل الأدبي والعروضي"), align="C")
     
-    pdf.set_font("GoogleArabic", size=14)
-    pdf.set_text_color(20, 80, 160)
-    pdf.set_x(10)
-    pdf.multi_cell(190, 9, "Smart Critic", align="C")
-    
-    pdf.set_font("GoogleArabic", size=12)
+    pdf.set_font("GoogleArabic", size=13)
     pdf.set_text_color(165, 105, 15)
-    pdf.set_x(10)
-    pdf.multi_cell(190, 9, shape_arabic("تصميم وتطوير المبرمج: محمد النجري"), align="C")
-    pdf.ln(5)
-
+    pdf.set_x(12)
+    pdf.multi_cell(186, 9, shape_arabic("تصميم وتطوير المبرمج: محمد النجري"), align="C")
+    pdf.ln(6)
     
-    # نص التقرير بالخط الغامق الأنيق
+    # نص التقرير بنفس الخط العربي الغامق الأنيق
     pdf.set_font("GoogleArabic", size=12)
     pdf.set_text_color(25, 25, 25)
     raw_all = poem_text + "\n\n" + report_text
-    no_tashkeel = re.sub(r'[\u064B-\u065F\u0670*#`]', '', raw_all)
-    no_tashkeel = no_tashkeel.replace("/", "|")
-    no_tashkeel = no_tashkeel.replace("0", "o")
-
+    no_tashkeel = re.sub(r'[\u064B-\u065F\u0670*#`/0]', '', raw_all)
     for line in no_tashkeel.split('\n'):
-        if line.strip():
-            pdf.set_x(10)
-            pdf.multi_cell(190, 8, shape_arabic(line.strip()), align="R")
+        stripped = line.strip()
+        if stripped and stripped != "التقطيع الصوتي بالرموز:":
+            pdf.set_x(12)
+            pdf.multi_cell(186, 8.5, shape_arabic(stripped), align="R")
     return bytes(pdf.output())
 
 
