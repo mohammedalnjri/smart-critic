@@ -33,14 +33,13 @@ if GROQ_API_KEY:
             if "whisper" not in m.id.lower() and "guard" not in m.id.lower() and "orpheus" not in m.id.lower()
         ]
     except Exception:
-        available_models = ["openai/gpt-oss-120b", "llama-3.1-8b-instant", "qwen/qwen3.8-27b"]
+        available_models = ["openai/gpt-oss-120b", "llama-3.1-8b-instant", "qwen/qwen3-32b"]
 
-    # ترتيب النماذج التي تمنح حداً أعلى للرموز في الخطة المجانية
+    # ترتيب النماذج الأكثر استقراراً وسرعة في إظهار النتيجة
     preferred_order = [
         "openai/gpt-oss-120b",
         "llama-3.1-8b-instant",
         "qwen/qwen3-32b",
-        "qwen/qwen3.8-27b",
         "openai/gpt-oss-20b"
     ]
     
@@ -59,11 +58,11 @@ if GROQ_API_KEY:
         )
         max_out_tokens = st.slider(
             "الحد الأقصى لطول التقرير (Tokens):",
-            min_value=500,
+            min_value=800,
             max_value=4000,
-            value=900,
+            value=2500,
             step=100,
-            help="اجعله 900 للنموذج Qwen في الخطة المجانية لتجنب خطأ 429، ويمكنك رفعه مع النماذج الأخرى."
+            help="2500 مثالي لنموذج GPT-OSS-120B و Llama. إذا اخترت Qwen فاجعله 900."
         )
 
     st.write("---")
@@ -117,16 +116,24 @@ if GROQ_API_KEY:
 ثالثاً: التحليل العروضي والقافية (الكتابة العروضية، التقطيع /0//0، التفعيلات، اسم البحر الصحيح، وحرف الروي).
 رابعاً: التحليل البلاغي والجمالي (أبرز الصور البيانية والمحسنات البديعية).
 """
-                    
-                    chat_completion = client.chat.completions.create(
-                        messages=[
+                    # ضبط معاملات استدعاء النموذج لمنع ضياع التقرير في التفكير الداخلي
+                    api_kwargs = {
+                        "messages": [
                             {"role": "system", "content": system_instruction},
                             {"role": "user", "content": user_message}
                         ],
-                        model=selected_model,
-                        temperature=0.1,
-                        max_tokens=max_out_tokens
-                    )
+                        "model": selected_model,
+                        "temperature": 0.1,
+                        "max_tokens": max_out_tokens
+                    }
+                    
+                    if "gpt-oss" in selected_model.lower():
+                        api_kwargs["reasoning_effort"] = "low"
+                    elif "qwen" in selected_model.lower():
+                        api_kwargs["reasoning_format"] = "hidden"
+                        api_kwargs["max_tokens"] = min(max_out_tokens, 950)
+
+                    chat_completion = client.chat.completions.create(**api_kwargs)
                     
                     st.write("---")
                     st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
@@ -143,11 +150,11 @@ if GROQ_API_KEY:
                             mime="text/plain"
                         )
                     else:
-                        st.warning("⚠️ لم يُرجع النموذج نصاً، جرب زيادة (الحد الأقصى لطول التقرير) من القائمة الجانبية أو اختر نموذجاً آخر.")
+                        st.warning("⚠️ لم يُرجع النموذج نصاً، افتح القائمة الجانبية (>>) واختر نموذج llama-3.1-8b-instant.")
                         
                 except Exception as e:
                     if "429" in str(e):
-                        st.error("⚠️ تجاوزت الحد المجاني للدقيقة في هذا النموذج. انتظر دقيقة واحدة أو اختر نموذجاً آخر من القائمة الجانبية (مثل llama-3.1-8b-instant).")
+                        st.error("⚠️ تجاوزت الحد المجاني للدقيقة في هذا النموذج. انتظر دقيقة واحدة أو اختر نموذجاً آخر من القائمة الجانبية (>>).")
                     else:
                         st.error(f"⚠️ حدث خطأ أثناء المعالجة: {e}")
 else:
