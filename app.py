@@ -245,7 +245,12 @@ if GEMINI_API_KEY:
 
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
                 final_report = ""
-                valid_models = ["gemini-3.8-flash", "gemini-3-flash-preview"]
+                                valid_models = []
+                for m in client.models.list():
+                    name = m.name.replace("models/", "")
+                    if "gemini" in name and ("flash" in name or "pro" in name) and not any(x in name for x in ("vision", "embedding", "tts", "image", "audio")):
+                        valid_models.append(name)
+
                 for model_name in valid_models:
                     try:
                         response = client.models.generate_content(model=model_name, contents=full_prompt)
