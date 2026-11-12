@@ -34,65 +34,24 @@ st.subheader("التحليل الأدبي والعروضي الصارم بأحد
 # دالة إنشاء ملف PDF عربي منسق بخط أميري
 # ========================================== 
 def shape_arabic(text):
-    reshaped = arabic_reshaper.reshape(text)
-    return get_display(reshaped)
+    return get_display(arabic_reshaper.reshape(text))
 
 def create_arabic_pdf(report_text, poem_text):
-    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-    if not os.path.exists(font_path):
-        for root, dirs, files in os.walk("/usr/share/fonts"):
-            for f in files:
-                if f.endswith(".ttf"):
-                    font_path = os.path.join(root, f)
-                    break
-            if os.path.exists(font_path):
-                break
-
-
-    
-
-
-
     pdf = FPDF()
     pdf.add_page()
-    pdf.add_font("Amiri", "", font_path)
-    pdf.set_font("Amiri", size=18)
-
-    # ترويسة التقرير
-    pdf.set_text_color(30, 90, 160)
-    pdf.cell(0, 12, shape_arabic("تقرير منصة الناقد الذكي - Smart Critic"), new_x="LMARGIN", new_y="NEXT", align="C")
-    pdf.set_font("Amiri", size=12)
-    pdf.set_text_color(100, 100, 100)
-    pdf.cell(0, 8, shape_arabic("تصميم المبرمج محمد النجري"), new_x="LMARGIN", new_y="NEXT", align="C")
+    pdf.add_font("DejaVu", "", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
+    pdf.set_font("DejaVu", size=14)
+    pdf.multi_cell(0, 10, shape_arabic("تقرير منصة الناقد الذكي - Smart Critic"), align="C")
+    pdf.set_font("DejaVu", size=11)
+    pdf.multi_cell(0, 8, shape_arabic("تصميم المبرمج محمد النجري"), align="C")
     pdf.ln(5)
-
-    # النص الشعري المدخل
-    pdf.set_font("Amiri", size=13)
-    pdf.set_text_color(0, 100, 60)
-    pdf.cell(0, 10, shape_arabic("النص الشعري المحلل:"), new_x="LMARGIN", new_y="NEXT", align="R")
-    pdf.set_text_color(20, 20, 20)
-    for p_line in poem_text.strip().split('\n'):
-        if p_line.strip():
-            pdf.multi_cell(0, 8, shape_arabic(p_line.strip()), align="C")
-    pdf.ln(5)
-
-    # محتوى التقرير
-    clean_report = re.sub(r'[*#`]', '', report_text)
-    for line in clean_report.split('\n'):
-        stripped = line.strip()
-        if not stripped:
-            pdf.ln(3)
-            continue
-        if stripped.startswith(("أولاً:", "ثانياً:", "ثالثاً:", "رابعاً:")):
-            pdf.set_font("Amiri", size=15)
-            pdf.set_text_color(30, 90, 160)
-            pdf.multi_cell(0, 10, shape_arabic(stripped), align="R")
-        else:
-            pdf.set_font("Amiri", size=12)
-            pdf.set_text_color(30, 30, 30)
-            pdf.multi_cell(0, 8, shape_arabic(stripped), align="R")
-
+    clean_text = re.sub(r'[*#`]', '', poem_text + "\n\n" + report_text)
+    for line in clean_text.split('\n'):
+        if line.strip():
+            pdf.multi_cell(0, 8, shape_arabic(line.strip()), align="R")
     return bytes(pdf.output())
+
+
 
 # ==========================================
 # محرك التحليل العروضي الرياضي المدمج
