@@ -52,13 +52,19 @@ def create_arabic_pdf(report_text, poem_text):
     pdf.set_font("GoogleArabic", size=18)
     pdf.set_text_color(20, 80, 160)
     pdf.set_x(10)
-    pdf.multi_cell(190, 11, shape_arabic("منصة الناقد الذكي - Smart Critic"), align="C")
+    pdf.multi_cell(190, 11, shape_arabic("منصة الناقد الذكي"), align="C")
     
-    pdf.set_font("GoogleArabic", size=13)
+    pdf.set_font("GoogleArabic", size=14)
+    pdf.set_text_color(20, 80, 160)
+    pdf.set_x(10)
+    pdf.multi_cell(190, 9, "Smart Critic", align="C")
+    
+    pdf.set_font("GoogleArabic", size=12)
     pdf.set_text_color(165, 105, 15)
     pdf.set_x(10)
-    pdf.multi_cell(190, 9, shape_arabic("تصميم وتطوير المبرمج: محمد النجري | smart-critic.streamlit.app"), align="C")
-    pdf.ln(6)
+    pdf.multi_cell(190, 9, shape_arabic("تصميم وتطوير المبرمج: محمد النجري"), align="C")
+    pdf.ln(5)
+
     
     # نص التقرير بالخط الغامق الأنيق
     pdf.set_font("GoogleArabic", size=12)
@@ -231,7 +237,7 @@ if GEMINI_API_KEY:
 قدّم التقرير في 4 أقسام:
 ### أولاً: التوثيق التاريخي والأدبي
 ### ثانياً: الشرح اللغوي والدلالي
-### ثالثاً: التحليل العروضي والإيقاع الموسيقي
+### ثالثاً: التحليل العروضي والإيقاع الموسيقي (اكتب الكتابة العروضية، والتقطيع الصوتي بالرموز / و 0، والتفعيلات، والبحر، والقافية والروي)
 ### رابعاً: التحليل البلاغي والجمالي"""
 
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
@@ -239,8 +245,7 @@ if GEMINI_API_KEY:
                 valid_models = []
                 for m in client.models.list():
                     name = m.name.replace("models/", "")
-                for m in client.models.list():
-                    name = m.name.replace("models/", "")
+                
                     if "gemini" in name and "flash" in name and not any(x in name for x in ("vision", "embedding", "tts", "image", "audio", "1.5", "2.0", "2.5")):
                         valid_models.append(name)
 
