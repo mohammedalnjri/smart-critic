@@ -140,10 +140,18 @@ if GEMINI_API_KEY:
 - الصور البيانية (التشبيه، الاستعارة، الكناية).
 - المحسنات البديعية والجماليات الأسلوبية.
 """
-                    # قائمة محركات متدرجة للتبديل التلقائي عند وجود ضغط (503)
-                    models_to_try = ["gemini-3.8-flash", "gemini-3.8-flash-lite", "gemini-3.8-pro"]
+                    # جلب قائمة النماذج المتاحة في حسابك تلقائياً وتجربتها
+                    models_to_try = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+                    try:
+                        for m in client.models.list():
+                            m_name = m.name.replace("models/", "")
+                            if "gemini" in m_name and "flash" in m_name and m_name not in models_to_try:
+                                models_to_try.append(m_name)
+                    except Exception:
+                        pass
+
                     response = None
-                    last_error = None
+                    last_error = ""
 
                     for model_name in models_to_try:
                         try:
@@ -158,7 +166,7 @@ if GEMINI_API_KEY:
                             if response and response.text:
                                 break
                         except Exception as err:
-                            last_error = err
+                            last_error = str(err)
                             time.sleep(1)
                             continue
 
@@ -174,9 +182,9 @@ if GEMINI_API_KEY:
                             mime="text/plain"
                         )
                     else:
-                        st.warning("⚠️ الخوادم تشهد ضغطاً لحظياً كبيراً، يرجى الضغط على زر التحليل مرة أخرى بعد ثوانٍ.")
+                        st.warning(f"⚠️ تعذر إكمال الطلب حالياً. تفاصيل الخادم: {last_error}")
                         
                 except Exception as e:
-                    st.error("⚠️ حدث خطأ أثناء المعالجة، يرجى المحاولة مرة أخرى.")
+                    st.error(f"⚠️ حدث خطأ أثناء المعالجة: {e}")
 else:
     st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
