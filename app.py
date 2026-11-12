@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import time
 from google import genai
 
 st.set_page_config(
@@ -94,26 +95,25 @@ if GEMINI_API_KEY:
 """
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
                 final_report = ""
-                error_details = ""
                 
-                for model_name in ("gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.8-flash", "gemini-2.5-pro"):
-                    try:
-                        response = client.models.generate_content(
-                            model=model_name,
-                            contents=combined_prompt
-                        )
-                        if response and response.text:
-                            final_report = response.text
-                            break
-                    except Exception as err:
-                        error_details = f"{model_name}: {err}"
-                        continue
+                for attempt in (1, 2):
+                    for model_name in ("gemini-3.8-flash", "gemini-3-flash-preview"):
+                        try:
+                            response = client.models.generate_content(
+                                model=model_name,
+                                contents=combined_prompt
+                            )
+                            if response and response.text:
+                                final_report = response.text
+                                break
+                        except Exception:
+                            time.sleep(1.5)
+                            continue
+                    if final_report:
+                        break
 
                 if final_report:
                     st.session_state["saved_report"] = final_report
-                else:
-                    st.warning("تعذر إتمام الطلب، تفاصيل الاستجابة:")
-                    st.code(error_details)
 
     if "saved_report" in st.session_state and st.session_state["saved_report"]:
         st.write("---")
