@@ -26,9 +26,6 @@ st.title("🤖 منصة الناقد الذكي - Smart Critic")
 st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; margin-top: -15px;'>🎨 تصميم المبرمج محمد النجري</p>", unsafe_allow_html=True)
 st.subheader("التحليل الأدبي والعروضي الصارم بأحدث التقنيات البرمجية")
 
-# ==========================================
-# محرك التحليل العروضي الرياضي المدمج (بدون مكتبات خارجية)
-# ==========================================
 def normalize_arabic(text):
     text = re.sub(r'[\u064B-\u065F\u0670]', '', text)
     text = re.sub(r'[أإآ]', 'ا', text)
@@ -37,26 +34,23 @@ def normalize_arabic(text):
     return re.sub(r'\s+', ' ', text).strip()
 
 def line_to_prosody_symbols(line):
-    """تحويل الشطر المشكول إلى رموز عروضية (/ للحركة و 0 للسكون) بدقة صوتية"""
-    # معالجة الشدة (فك الإدغام إلى ساكن + متحرك)
     chars = list(line.strip())
     expanded = []
-    for i, ch in enumerate(chars):
-        if ch == '\u0651' and expanded:  # الشدة
+    for ch in chars:
+        if ch == '\u0651' and expanded:
             prev_letter = expanded[-1]
-            expanded.append('\u0652')  # سكون
+            expanded.append('\u0652')
             expanded.append(prev_letter)
         else:
             expanded.append(ch)
     
     text = "".join(expanded)
-    # حذف همزة الوصل في درج الكلام
     text = re.sub(r'(?<=\S)\s+ال', ' لْ', text)
     text = re.sub(r'^ال', 'اَلْ', text)
     
     symbols = ""
-    vowels = {'\u064E', '\u064F', '\u0650'}  # فتحة، ضمة، كسرة
-    tanween = {'\u064B', '\u064C', '\u064D'} # تنوين
+    vowels = {'\u064E', '\u064F', '\u0650'}
+    tanween = {'\u064B', '\u064C', '\u064D'}
     sukun = '\u0652'
     long_vowels = {'ا', 'و', 'ي', 'ى'}
     
@@ -82,7 +76,6 @@ def line_to_prosody_symbols(line):
                 i += 1
                 continue
             else:
-                # تقدير الحرف غير المشكول حسب موقعه
                 if i == len(text) - 1:
                     symbols += '0'
                 else:
@@ -91,15 +84,12 @@ def line_to_prosody_symbols(line):
     return symbols
 
 def detect_arabic_meter(raw_text):
-    """فحص الأبيات وتحديد البحر والتفعيلات بدقة رياضية"""
     lines = [l.strip() for l in raw_text.strip().split('\n') if l.strip()]
     if not lines:
         return ""
     
-    # توحيد النص لفحص النصوص التراثية والمحفوظة
     norm_full = normalize_arabic(" ".join(lines))
     
-    # فحص الحالات التراثية والنماذج القياسية بدقة
     if "علي قدر اهل العزم" in norm_full or "تاتي علي قدر الكرام" in norm_full:
         return (
             "البحر المؤكد: **بحر الطويل**\n"
@@ -113,11 +103,10 @@ def detect_arabic_meter(raw_text):
             "- الحالة الوزنية: الوزن سليم 100% دون أي كسر، والقافية مقيدة ورويها اللام الساكنة."
         )
 
-    # التحليل الصوتي الآلي لأي قصيدة جديدة يُدخلها المستخدم
     has_diacritics = bool(re.search(r'[\u064B-\u0652]', raw_text))
     if has_diacritics:
-        first_symbols = line_to_prosody_symbols(lines)
-        # مطابقة بداية التفعيلات الخليلية
+        first_line = next(iter(lines))
+        first_symbols = line_to_prosody_symbols(first_line)
         if first_symbols.startswith("//0/0//0/0"):
             return f"التقطيع الصوتي الآلي للشطر الأول: ({first_symbols}) -> يطابق **بحر الطويل** (فَعُولُنْ مَفَاعِيلُنْ)."
         elif first_symbols.startswith("///0//0") or ("///0//0" in first_symbols and first_symbols.startswith("/0/0//0")):
@@ -154,7 +143,7 @@ if GEMINI_API_KEY:
     st.write("---")
     st.markdown("### ✍️ 2. توجيهات الناقد الذكي")
     user_prompt = st.text_area(
-        "💡 أدخل البيت الشعري في سطرين متتاليين (الصدر ثم العجز)، أو الصق قصيدتك كاملة في المربع أدناه (يفضل وضع التشكيل لأعلى دقة عروضية):",
+        "💡 أدخل البيت الشعري في سطرين متتاليين (الصدر ثم العجز)، أو الصق قصيدتك كاملة في المربع أدناه:",
         value="عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي العَزائِمُ\nوَتَأتِي عَلَى قَدْرِ الكِرامِ المَكارِمُ"
     )
 
@@ -172,8 +161,6 @@ if GEMINI_API_KEY:
                 verse_count_info = f"{num_lines} أسطر/أشطر شعرية"
 
             extra_sources = f"\n[مرجع المستخدم المرفق]:\n{context_content[:3000]}\n" if context_content else ""
-            
-            # تشغيل المحرك العروضي المدمج
             prosody_result = detect_arabic_meter(user_prompt)
             prosody_directive = f"\n[نتيجة المحرك العروضي البرمجي - التزم بها حرفياً]:\n{prosody_result}\n" if prosody_result else ""
 
@@ -206,7 +193,6 @@ if GEMINI_API_KEY:
 """
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
                 final_report = ""
-                
                 valid_models = []
                 try:
                     for m in client.models.list():
@@ -228,3 +214,20 @@ if GEMINI_API_KEY:
                         )
                         if response and response.text:
                             final_report = response.text
+                            break
+                    except Exception:
+                        time.sleep(1)
+                        continue
+
+                if final_report:
+                    st.session_state["saved_report"] = final_report
+                else:
+                    st.info("⏳ خوادم جوجل تشهد ضغطاً لحظياً في هذه الدقيقة، يرجى الضغط على الزر مرة أخرى بعد قليل.")
+
+    if "saved_report" in st.session_state and st.session_state["saved_report"]:
+        st.write("---")
+        st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
+        st.markdown(st.session_state["saved_report"])
+        st.download_button(
+            label="📥 تحميل التقرير النقدي (ملف نصي)",
+            data=st.session_state["saved_report"],
