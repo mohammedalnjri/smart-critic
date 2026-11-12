@@ -88,7 +88,7 @@ if GEMINI_API_KEY:
             else:
                 verse_count_info = f"{num_lines} أسطر/أشطر شعرية"
 
-            with st.spinner("🔄 جاري التحقق السريع من المصادر..."): 
+            with st.spinner("🔄 جاري التحقق من المصادر..."): 
                 clean_poem = remove_diacritics(user_prompt)
                 web_context = search_poem_context(clean_poem)
 
@@ -141,12 +141,21 @@ if GEMINI_API_KEY:
             st.write("---")
             st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
             
-            # مكان عرض النص المباشر أثناء الكتابة
             report_placeholder = st.empty()
             full_response = ""
             
-            models_to_try = ["gemini-3.8-flash", "gemini-3.8-flash-lite", "gemini-3.8-pro"]
+            # جلب جميع النماذج المفعلة في مفتاحك وتجربتها بالبث المباشر
+            models_to_try = ["gemini-3.8-flash"]
+            try:
+                for m in client.models.list():
+                    m_name = m.name.replace("models/", "")
+                    if "gemini" in m_name and ("flash" in m_name or "pro" in m_name) and m_name not in models_to_try:
+                        models_to_try.append(m_name)
+            except Exception:
+                pass
+
             success = False
+            last_error = ""
 
             for model_name in models_to_try:
                 try:
@@ -163,10 +172,12 @@ if GEMINI_API_KEY:
                             full_response += chunk.text
                             report_placeholder.markdown(full_response + " ▌")
                     
-                    report_placeholder.markdown(full_response)
-                    success = True
-                    break
-                except Exception:
+                    if full_response:
+                        report_placeholder.markdown(full_response)
+                        success = True
+                        break
+                except Exception as err:
+                    last_error = str(err)
                     full_response = ""
                     continue
 
@@ -178,6 +189,6 @@ if GEMINI_API_KEY:
                     mime="text/plain"
                 )
             else:
-                st.warning("⚠️ الخوادم تشهد ضغطاً لحظياً، يرجى الضغط على زر التحليل مرة أخرى.")
+                st.warning(f"⚠️ الخوادم تشهد ضغطاً لحظياً، يرجى المحاولة بعد ثوانٍ. ({last_error})")
 else:
     st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
