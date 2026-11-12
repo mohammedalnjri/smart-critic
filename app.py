@@ -228,6 +228,12 @@ if GEMINI_API_KEY:
         st.write("---")
         st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
         st.markdown(st.session_state["saved_report"])
-        st.download_button(
+                st.download_button(
             label="📥 تحميل التقرير النقدي (ملف نصي)",
             data=st.session_state["saved_report"],
+            file_name="تقرير_الناقد_الذكي.txt",
+            mime="text/plain"
+        )
+else:
+    st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
+
