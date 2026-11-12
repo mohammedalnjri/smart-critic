@@ -225,16 +225,55 @@ if GEMINI_API_KEY:
             prosody_result = detect_arabic_meter(user_prompt)
             prosody_directive = f"\n[مرجع عروضي ملزم]:\n{prosody_result}\n" if prosody_result else ""
 
-            full_prompt = f"""
-أنت بروفيسور وعلامة محقق في الأدب العربي (الفصيح والشعبي والحُمَيني والنبطي) وعلم العروض والقافية.
+                        full_prompt = f"""أنت بروفيسور محقق في الأدب العربي (الفصيح والشعبي والحُمَيني) وعلم العروض.
 {prosody_directive}
-التزم بالمنهج العلمي الأكاديمي الصارم التالي:
-
 1. عدد الأبيات/الأشطر المؤكد هو: ({verse_count_info}). التزم به حرفياً.
-2. التمييز اللغوي: حدد أولاً نوع النص بدقة (شعر فصيح عمودي، شعر تفعيلة، أم شعر شعبي / حُمَيني / زامل).
-3. الأمانة في التوثيق:
-   - إذا كان النص لشاعر معروف في التراث أو الأدب الحديث اذكر اسم الشاعر، الديوان، العصر، والمناسبة التاريخية بدقة تامة.
-   - إذا كان النص شعراً شعبياً غير منشور أو محاولة شعرية خاصة غير موجودة في الدواوين، صرّح بأمانة أنه "نص غير موثق في الدواوين المنشورة" دون اختلاق أسماء شعراء.
-4. منهجية التحليل العروضي والموسيقي (حسب نوع النص):
-   - **أولاً: إذا كان النص شعراً فصيحاً:** حلله وفق البحور الخليلية الـ 16 وجوازاتها، والتزم بتفعيلات بحر واحد موحد للقصيدة، ولا تشِر في نص التقرير إلى أي عبارات تقنية مثل "المحرك العروضي" بل ادخل في التحليل مباشرة.
-   - **ثانياً: إذا كان النص شعراً شعبياً أو حُمَينياً أو زاملاً:**
+2. حدد نوع النص بدقة (فصيح عمودي، تفعيلة، أم شعبي/حُمَيني/زامل).
+3. الأمانة في التوثيق: اذكر الشاعر الحقيقي للمعروف، وقل "نص غير موثق في الدواوين" لغير المنشور دون اختلاق.
+4. العروض: للفصيح التزم بالبحور الـ 16 وجوازاتها دون ذكر عبارات تقنية. للشعبي حلل الإيقاع واللحن والقافية المقيدة واستخدم مصطلح "سناد الردف" بدلاً من الإقواء عند اختلاف حرف المد قبل الروي.
+5. نظّم التقرير في فقرات وعناوين فرعية دون جداول.
+
+النص الشعري:
+"{user_prompt}"
+{extra_sources}
+
+قدّم التقرير في 4 أقسام:
+### أولاً: التوثيق التاريخي والأدبي
+### ثانياً: الشرح اللغوي والدلالي
+### ثالثاً: التحليل العروضي والإيقاع الموسيقي
+### رابعاً: التحليل البلاغي والجمالي"""
+
+            with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
+                final_report = ""
+                valid_models = ["gemini-3.8-flash", "gemini-3-flash-preview"]
+                for model_name in valid_models:
+                    try:
+                        response = client.models.generate_content(model=model_name, contents=full_prompt)
+                        if response and response.text:
+                            final_report = response.text
+                            break
+                    except Exception:
+                        time.sleep(1)
+                        continue
+
+                if final_report:
+                    st.session_state["saved_report"] = final_report
+                    st.session_state["saved_poem"] = user_prompt
+                else:
+                    st.info("⏳ خوادم جوجل تشهد ضغطاً لحظياً، يرجى الضغط على الزر مرة أخرى بعد قليل.")
+
+    if "saved_report" in st.session_state and st.session_state["saved_report"]:
+        st.write("---")
+        st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
+        st.markdown(st.session_state["saved_report"])
+        col1, col2 = st.columns(2)
+        with col1:
+            st.download_button("📥 تحميل نصي (TXT)", st.session_state["saved_report"], "Smart_Critic_Report.txt")
+        with col2:
+            try:
+                pdf_bytes = create_arabic_pdf(st.session_state["saved_report"], st.session_state.get("saved_poem", ""))
+                st.download_button("📄 تحميل كتابي (PDF)", pdf_bytes, "Smart_Critic_Report.pdf", "application/pdf")
+            except Exception as pdf_err:
+                st.caption(f"تعذر تجهيز PDF: {pdf_err}")
+else:
+    st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
