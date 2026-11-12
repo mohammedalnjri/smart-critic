@@ -29,10 +29,9 @@ st.subheader("التحليل الأدبي والعروضي الصارم بأحد
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 if GEMINI_API_KEY:
-    # مهلة 45 ثانية كافية تماماً لكتابة التقرير الأكاديمي الكامل دون انقطاع
     client = genai.Client(
         api_key=GEMINI_API_KEY,
-        http_options=types.HttpOptions(timeout=45000)
+        http_options=types.HttpOptions(timeout=25000)
     )
 
     st.write("---")
@@ -122,11 +121,10 @@ if GEMINI_API_KEY:
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
                 final_report = ""
                 
-                # الاعتماد المباشر على النموذج الذي نجح في حسابك (gemini-3.8-flash)
-                for attempt in (1, 2, 3):
+                for model_name in ("gemini-3.8-flash", "gemini-3-flash-preview"):
                     try:
                         response = client.models.generate_content(
-                            model="gemini-3.8-flash",
+                            model=model_name,
                             contents=user_message,
                             config=types.GenerateContentConfig(
                                 system_instruction=system_instruction,
@@ -137,19 +135,24 @@ if GEMINI_API_KEY:
                             final_report = response.text
                             break
                     except Exception:
-                        time.sleep(2)
+                        time.sleep(1)
                         continue
 
-                st.write("---")
-                st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
-                
                 if final_report:
-                    st.markdown(final_report)
-                    st.download_button(
-                        label="📥 تحميل التقرير النقدي (ملف نصي)",
-                        data=final_report,
-                        file_name="تقرير_الناقد_الذكي.txt",
-                        mime="text/plain"
-                    )
+                    st.session_state["saved_report"] = final_report
+                else:
+                    st.info("⏳ الخادم مزدحم في هذه اللحظة، اضغط على الزر مرة أخرى بعد 5 ثوانٍ.")
+
+    # عرض التقرير المحفوظ حتى لا يختفي أبداً
+    if "saved_report" in st.session_state and st.session_state["saved_report"]:
+        st.write("---")
+        st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
+        st.markdown(st.session_state["saved_report"])
+        st.download_button(
+            label="📥 تحميل التقرير النقدي (ملف نصي)",
+            data=st.session_state["saved_report"],
+            file_name="تقرير_الناقد_الذكي.txt",
+            mime="text/plain"
+        )
 else:
     st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
