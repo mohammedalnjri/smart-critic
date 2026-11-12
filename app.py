@@ -36,7 +36,6 @@ st.subheader("التحليل الأدبي والعروضي الصارم بأحد
 def shape_arabic(text):
     return get_display(arabic_reshaper.reshape(text))
 
-
 def create_arabic_pdf(report_text, poem_text):
     import matplotlib.font_manager as fm
     pdf = FPDF()
@@ -48,11 +47,14 @@ def create_arabic_pdf(report_text, poem_text):
     pdf.set_font("DejaVu", size=11)
     pdf.multi_cell(190, 8, shape_arabic("تصميم المبرمج محمد النجري"), align="C")
     pdf.ln(5)
-    clean_text = re.sub(r'[*#`]', '', poem_text + "\n\n" + report_text)
-    for line in clean_text.split('\n'):
+    raw_all = poem_text + "\n\n" + report_text
+    no_tashkeel = re.sub(r'[\u064B-\u065F\u0670*#`]', '', raw_all)
+    for line in no_tashkeel.split('\n'):
         if line.strip():
+            pdf.set_x(10)
             pdf.multi_cell(190, 8, shape_arabic(line.strip()), align="R")
     return bytes(pdf.output())
+
 
 
 
