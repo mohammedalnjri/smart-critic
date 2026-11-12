@@ -10,7 +10,6 @@ st.set_page_config(
 )
 
 st.title("🤖 منصة الناقد الذكي - Smart Critic")
-# إضافة اسم المبرمج المصمم بشكل منسق وجذاب تحت العنوان مباشرة
 st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; margin-top: -15px;'>🎨 تصميم المبرمج محمد النجري</p>", unsafe_allow_html=True)
 st.subheader("التحليل الأدبي والعروضي الصارم بأحدث التقنيات البرمجية")
 
@@ -18,6 +17,43 @@ st.subheader("التحليل الأدبي والعروضي الصارم بأحد
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
 if GROQ_API_KEY:
+    client = Groq(api_key=GROQ_API_KEY)
+    
+    # جلب قائمة النماذج النصية المتاحة والمفعلة في حسابك تلقائياً
+    try:
+        models_list = client.models.list()
+        available_models = [
+            m.id for m in models_list.data 
+            if "whisper" not in m.id.lower() and "guard" not in m.id.lower() and "orpheus" not in m.id.lower()
+        ]
+    except Exception:
+        available_models = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
+
+    # ترتيب النماذج المفضلة للتحليل الأدبي العربي
+    preferred_order = [
+        "openai/gpt-oss-120b",
+        "qwen/qwen3.8-27b",
+        "qwen/qwen3-32b",
+        "openai/gpt-oss-20b",
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant"
+    ]
+    
+    default_index = 0
+    for pref in preferred_order:
+        if pref in available_models:
+            default_index = available_models.index(pref)
+            break
+
+    # إضافة قائمة اختيار النموذج في الشريط الجانبي للتبديل بسهولة
+    with st.sidebar:
+        st.header("⚙️ إعدادات المحرك")
+        selected_model = st.selectbox(
+            "اختر نموذج الذكاء الاصطناعي المتاح في حسابك:",
+            options=available_models,
+            index=default_index
+        )
+
     # 3. واجهة المراجع والملفات
     st.write("---")
     st.markdown("### 📚 1. المراجع والنصوص المراد تحليلها")
@@ -44,10 +80,8 @@ if GROQ_API_KEY:
         if not user_prompt:
             st.error("الرجاء كتابة التوجيه أو السؤال أولاً!")
         else:
-            with st.spinner("🔄 جاري استخراج التحليل الأكاديمي الشامل..."): 
+            with st.spinner(f"🔄 جاري استخراج التحليل الأكاديمي الشامل عبر ({selected_model})..."): 
                 try:
-                    client = Groq(api_key=GROQ_API_KEY)
-                    
                     reference_text = f"\nاستعن بالمرجع الإضافي التالي إن لزم الأمر:\n{context_content}" if context_content else ""
                     
                     full_prompt = f"""
@@ -72,9 +106,9 @@ if GROQ_API_KEY:
                         messages=[
                             {"role": "user", "content": full_prompt}
                         ],
-                        model="llama-3.3-70b-versatile",
+                        model=selected_model,
                         temperature=0.2,
-                        max_tokens=4096
+                        max_tokens=8192
                     )
                     
                     st.write("---")
@@ -84,7 +118,6 @@ if GROQ_API_KEY:
                     if response_text:
                         st.markdown(response_text)
                         
-                        # زر إضافي لتحميل التقرير كملف نصي
                         st.download_button(
                             label="📥 تحميل التقرير النقدي (ملف نصي)",
                             data=response_text,
@@ -92,7 +125,7 @@ if GROQ_API_KEY:
                             mime="text/plain"
                         )
                     else:
-                        st.warning("⚠️ لم يُرجع النموذج أي نص، يرجى الضغط على زر التحليل مرة أخرى.")
+                        st.warning("⚠️ لم يُرجع النموذج نصاً، جرب اختيار نموذج آخر من القائمة الجانبية.")
                     
                 except Exception as e:
                     st.error(f"⚠️ حدث خطأ أثناء المعالجة: {e}")
