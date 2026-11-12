@@ -33,7 +33,7 @@ st.subheader("التحليل الأدبي والعروضي الصارم بأحد
 # ==========================================
 # دالة إنشاء ملف PDF عربي منسق بخط أميري
 # ==========================================
-def shape_arabic(text):
+    def shape_arabic(text):
     reshaped = arabic_reshaper.reshape(text)
     return get_display(reshaped)
 
