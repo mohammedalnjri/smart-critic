@@ -40,7 +40,7 @@ def shape_arabic(text):
     def create_arabic_pdf(report_text, poem_text):
         font_path = ""
     for root, dirs, files in os.walk("/usr/share/fonts"):
-    for f in files:
+       for f in files:
             if f.endswith(".ttf"):
                 font_path = os.path.join(root, f)
                 break
