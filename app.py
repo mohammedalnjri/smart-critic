@@ -256,4 +256,4 @@ if GEMINI_API_KEY:
                 st.caption(f"تعذر تجهيز PDF: {pdf_err}")
 else:
     st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
-matplotlib
+
