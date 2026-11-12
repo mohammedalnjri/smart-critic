@@ -1,8 +1,8 @@
 import streamlit as st
 import os
+import time
 from google import genai
 from google.genai import types
-from groq import Groq
 
 st.set_page_config(
     page_title="Smart Critic - الناقد الذكي",
@@ -27,9 +27,10 @@ st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; mar
 st.subheader("التحليل الأدبي والعروضي الصارم بأحدث التقنيات البرمجية")
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
-if GEMINI_API_KEY or GROQ_API_KEY:
+if GEMINI_API_KEY:
+    client = genai.Client(api_key=GEMINI_API_KEY)
+
     st.write("---")
     st.markdown("### 📚 1. المراجع والنصوص المراد تحليلها")
     uploaded_file = st.file_uploader("ارفع الملف أو المرجع العربي (TXT أو PDF):", type=["txt", "pdf"])
@@ -64,105 +65,69 @@ if GEMINI_API_KEY or GROQ_API_KEY:
 
             extra_sources = f"\n[مرجع المستخدم المرفق]:\n{context_content[:3000]}\n" if context_content else ""
 
-            system_instruction = f"""
-أنت بروفيسور وعلامة محقق في الأدب العربي (الفصيح والشعبي) وعلم العروض والقافية وفق مدرسة الخليل بن أحمد الفراهيدي.
-تلتزم بالمنهج العلمي الأكاديمي الصارم:
+            full_prompt = f"""
+بصفتك بروفيسوراً ومحققاً في الأدب العربي (الفصيح والشعبي) وعلم العروض والقافية وفق مدرسة الخليل بن أحمد الفراهيدي، التزم بالقواعد الصارمة التالية:
 
-1. عدد الأبيات المؤكد برمجياً هو: ({verse_count_info}). التزم به حرفياً.
-2. التمييز اللغوي: حدد أولاً نوع النص بدقة (شعر فصيح عمودي، شعر تفعيلة، أم شعر شعبي/نبطي).
+1. عدد الأبيات المؤكد هو: ({verse_count_info}). التزم به حرفياً.
+2. حدد نوع النص بدقة (شعر فصيح عمودي، شعر تفعيلة، أم شعر شعبي/نبطي).
 3. الأمانة في التوثيق:
    - إذا كان النص لشاعر معروف في التراث أو الأدب الحديث (مثل المتنبي، شوقي، نزار قباني...) اذكر اسم الشاعر، الديوان، العصر، والمناسبة التاريخية بدقة تامة.
    - إذا كان النص شعراً شعبياً غير منشور أو محاولة شعرية خاصة غير موجودة في الدواوين، صرّح بأمانة أنه "نص غير موثق في الدواوين المنشورة" دون اختلاق أسماء شعراء.
-
-4. قواعد التحقق العروضي الصارمة (ممنوع مخالفتها):
-   - الخطوة الأولى: اكتب البيت كتابة عروضية صوتية دقيقة (فك الإدغام، حذف همزة الوصل في درج الكلام، حذف ألف المد عند التقاء الساكنين مثل "تَأْتِي الْعَزَائِمُ" تُكتب "تَأْتِ لْعَزَائِمُو"، وإشباع حركة الروي).
-   - الخطوة الثانية: حوّل كل حرف متحرك إلى (/) وكل حرف ساكن أو حرف مد إلى (0) بدقة متناهية.
-   - الخطوة الثالثة (مفتاح البحور الـ 16): طابق بداية الشطر وتفعيلاته مع الميزان الصحيح قبل تسمية البحر:
-     * إذا بدأ بـ (//0/0 = فَعُولُنْ) وتلاه (//0/0/0 = مَفَاعِيلُنْ) فهو (بحر الطويل) قطعاً، ويُمنع تسميته بالبسيط أو الرجز.
-     * إذا بدأ بـ (/0/0//0 = مُسْتَفْعِلُنْ) وتلاه (/0//0 = فَاعِلُنْ) فهو (بحر البسيط).
-     * إذا بدأ بـ (//0///0 = مُفَاعَلَتُنْ) مكررة فهو (بحر الوافر).
-     * إذا بدأ بـ (///0//0 = مُتَفَاعِلُنْ) مكررة فهو (بحر الكامل).
-     * إذا بدأ بـ (/0//0/0 = فَاعِلَاتُنْ) مكررة فهو (بحر الرمل).
-     * إذا بدأ بـ (//0/0 = فَعُولُنْ) مكررة أربع مرات فهو (بحر المتقارب).
-     * إذا بدأ بـ (/0/0//0 = مُسْتَفْعِلُنْ) مكررة ثلاث مرات فهو (بحر الرجز).
-     * إذا بدأ بـ (//0/0/0 = مَفَاعِيلُنْ) مكررة مرتين في كل شطر فهو (بحر الهزج).
-   - الخطوة الرابعة: استخرج القافية (من آخر ساكن إلى أول ساكن يليه مع المتحرك الذي قبله) وحدد حرف الروي وحركته بدقة.
-
+4. قواعد التحقق العروضي الصارمة:
+   - اكتب البيت كتابة عروضية صوتية دقيقة (فك الإدغام، حذف همزة الوصل، حذف ألف المد عند التقاء الساكنين، وإشباع حركة الروي).
+   - حوّل كل حرف متحرك إلى (/) وكل حرف ساكن أو حرف مد إلى (0).
+   - طابق بداية الشطر مع الميزان العروضي الحقيقي قبل تسمية البحر:
+     * إذا بدأ الشطر بـ (//0/0 = فَعُولُنْ) وتلاه (//0/0/0 = مَفَاعِيلُنْ) فالبحر هو (بحر الطويل) قطعاً، ويُمنع تسميته بالبسيط أو الرجز.
+     * إذا بدأ الشطر بـ (/0/0//0 = مُسْتَفْعِلُنْ) وتلاه (/0//0 = فَاعِلُنْ) فالبحر هو (بحر البسيط).
+     * إذا بدأ الشطر بـ (//0///0 = مُفَاعَلَتُنْ) فالبحر هو (بحر الوافر).
+     * إذا بدأ الشطر بـ (///0//0 = مُتَفَاعِلُنْ) فالبحر هو (بحر الكامل).
+     * إذا بدأ الشطر بـ (/0//0/0 = فَاعِلَاتُنْ) فالبحر هو (بحر الرمل).
 5. التنسيق: نظّم التقرير في فقرات ونقاط واضحة بعناوين فرعية، ويُمنع استخدام الجداول منعاً باتاً.
-"""
 
-            user_message = f"""
-النص الشعري المدخل:
+النص الشعري المطلوب تحليله:
 "{user_prompt}"
 {extra_sources}
 
-قدّم تقريراً أكاديمياً متكاملاً ومفصلاً مقسماً إلى الأقسام الأربعة التالية في فقرات ونقاط واضحة دون جداول:
-
+قدّم التقرير مقسماً إلى الأقسام الأربعة التالية:
 ### أولاً: التوثيق التاريخي والأدبي
-- نوع النص الشعري.
-- عدد الأبيات: {verse_count_info}.
-- اسم الشاعر، العصر، ومناسبة النص بالتفصيل.
-
 ### ثانياً: الشرح اللغوي والدلالي
-- معاني المفردات والتراكيب.
-- الشرح الإجمالي والدلالي العميق.
-
 ### ثالثاً: التحليل العروضي والقافية
-- الكتابة العروضية للصدر والعجز.
-- التقطيع الصوتي بالرموز (/ و 0).
-- التفعيلات، اسم البحر الشعري، والقافية وحرف الروي وحركته.
-
 ### رابعاً: التحليل البلاغي والجمالي
-- الصور البيانية (التشبيه، الاستعارة، الكناية).
-- المحسنات البديعية والجماليات الأسلوبية.
 """
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
                 final_report = ""
                 
-                # المحاولة 1: Gemini (إذا لم يكن مزدحماً في هذه الثانية)
-                if GEMINI_API_KEY:
+                # جلب نماذج Gemini المتاحة فعلياً في مفتاحك فقط
+                valid_models = []
+                try:
+                    for m in client.models.list():
+                        name = m.name.replace("models/", "")
+                        if "gemini" in name and ("flash" in name or "pro" in name):
+                            if not any(x in name for x in ("vision", "embedding", "tts", "image", "audio", "1.5", "2.0", "2.5")):
+                                valid_models.append(name)
+                except Exception:
+                    valid_models = ["gemini-3.8-flash", "gemini-3-flash-preview"]
+
+                if not valid_models:
+                    valid_models = ["gemini-3.8-flash", "gemini-3-flash-preview"]
+
+                for model_name in valid_models:
                     try:
-                        gemini_client = genai.Client(api_key=GEMINI_API_KEY)
-                        response = gemini_client.models.generate_content(
-                            model="gemini-3.8-flash",
-                            contents=user_message,
-                            config=types.GenerateContentConfig(
-                                system_instruction=system_instruction,
-                                temperature=0.1,
-                            )
+                        response = client.models.generate_content(
+                            model=model_name,
+                            contents=full_prompt
                         )
                         if response and response.text:
                             final_report = response.text
+                            break
                     except Exception:
-                        pass
-
-                # المحاولة 2: Groq مع مفتاح البحور الـ 16 الصارم (يضمن العمل الفوري وعدم ترك الشاشة فارغة)
-                if not final_report and GROQ_API_KEY:
-                    groq_client = Groq(api_key=GROQ_API_KEY)
-                    for g_model in ("openai/gpt-oss-120b", "llama-3.1-8b-instant"):
-                        try:
-                            kwargs = {
-                                "messages": [
-                                    {"role": "system", "content": system_instruction},
-                                    {"role": "user", "content": user_message}
-                                ],
-                                "model": g_model,
-                                "temperature": 0.1,
-                                "max_tokens": 2500
-                            }
-                            if "gpt-oss" in g_model:
-                                kwargs["reasoning_effort"] = "low"
-                                
-                            chat_completion = groq_client.chat.completions.create(**kwargs)
-                            first_choice = next(iter(chat_completion.choices))
-                            if first_choice.message.content:
-                                final_report = first_choice.message.content
-                                break
-                        except Exception:
-                            continue
+                        time.sleep(1)
+                        continue
 
                 if final_report:
                     st.session_state["saved_report"] = final_report
+                else:
+                    st.info("⏳ خوادم جوجل تشهد ضغطاً لحظياً في هذه الدقيقة، يرجى الضغط على الزر مرة أخرى بعد قليل.")
 
     if "saved_report" in st.session_state and st.session_state["saved_report"]:
         st.write("---")
@@ -175,4 +140,4 @@ if GEMINI_API_KEY or GROQ_API_KEY:
             mime="text/plain"
         )
 else:
-    st.info("💡 يرجى التأكد من إضافة مفاتيح API في إعدادات الـ Secrets الخاصة بالتطبيق.")
+    st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
