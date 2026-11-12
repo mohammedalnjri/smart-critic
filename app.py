@@ -2,6 +2,7 @@ import streamlit as st
 import os
 from google import genai
 from google.genai import types
+from groq import Groq
 
 st.set_page_config(
     page_title="Smart Critic - الناقد الذكي",
@@ -26,14 +27,9 @@ st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; mar
 st.subheader("التحليل الأدبي والعروضي الصارم بأحدث التقنيات البرمجية")
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
-if GEMINI_API_KEY:
-    # ضبط مهلة زمنية صارمة (15 ثانية كحد أقصى) لمنع تعليق الصفحة لدقيقة كاملة
-    client = genai.Client(
-        api_key=GEMINI_API_KEY,
-        http_options=types.HttpOptions(timeout=15000)
-    )
-
+if GEMINI_API_KEY or GROQ_API_KEY:
     st.write("---")
     st.markdown("### 📚 1. المراجع والنصوص المراد تحليلها")
     uploaded_file = st.file_uploader("ارفع الملف أو المرجع العربي (TXT أو PDF):", type=["txt", "pdf"])
@@ -109,13 +105,17 @@ if GEMINI_API_KEY:
 - المحسنات البديعية والجماليات الأسلوبية.
 """
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي..."):
-                response = None
-                last_error = ""
-                
-                for model_name in ["gemini-3.8-flash-lite", "gemini-3.8-flash"]:
+                final_report = ""
+
+                # المحاولة 1: استخدام Gemini (الأدق علمياً وعروضياً)
+                if GEMINI_API_KEY:
                     try:
-                        response = client.models.generate_content(
-                            model=model_name,
+                        gemini_client = genai.Client(
+                            api_key=GEMINI_API_KEY,
+                            http_options=types.HttpOptions(timeout=12000)
+                        )
+                        response = gemini_client.models.generate_content(
+                            model="gemini-3.8-flash",
                             contents=user_message,
                             config=types.GenerateContentConfig(
                                 system_instruction=system_instruction,
@@ -124,23 +124,41 @@ if GEMINI_API_KEY:
                             )
                         )
                         if response and response.text:
-                            break
-                    except Exception as err:
-                        last_error = str(err)
-                        continue
+                            final_report = response.text
+                    except Exception:
+                        pass
+
+                # المحاولة 2 (الاحتياط الفوري): إذا كانت خوادم Gemini مزدحمة (503) ينتقل فوراً إلى Groq
+                if not final_report and GROQ_API_KEY:
+                    try:
+                        groq_client = Groq(api_key=GROQ_API_KEY)
+                        chat_completion = groq_client.chat.completions.create(
+                            messages=[
+                                {"role": "system", "content": system_instruction},
+                                {"role": "user", "content": user_message}
+                            ],
+                            model="llama-3.1-8b-instant",
+                            temperature=0.1,
+                            max_tokens=2048
+                        )
+                        first_choice = next(iter(chat_completion.choices))
+                        if first_choice.message.content:
+                            final_report = first_choice.message.content
+                    except Exception:
+                        pass
 
                 st.write("---")
                 st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
                 
-                if response and response.text:
-                    st.markdown(response.text)
+                if final_report:
+                    st.markdown(final_report)
                     st.download_button(
                         label="📥 تحميل التقرير النقدي (ملف نصي)",
-                        data=response.text,
+                        data=final_report,
                         file_name="تقرير_الناقد_الذكي.txt",
                         mime="text/plain"
                     )
                 else:
-                    st.error(f"⚠️ الخادم مشغول حالياً، يرجى المحاولة مرة أخرى بعد قليل. ({last_error})")
+                    st.error("⚠️ جميع الخوادم تشهد ضغطاً لحظياً في هذه الثانية، يرجى الضغط على الزر مرة أخرى.")
 else:
-    st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
+    st.info("💡 يرجى التأكد من إضافة مفاتيح API في إعدادات الـ Secrets الخاصة بالتطبيق.")
