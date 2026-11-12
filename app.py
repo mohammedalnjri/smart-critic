@@ -1,7 +1,8 @@
 import streamlit as st
 import os
 import re
-from groq import Groq
+from google import genai
+from google.genai import types
 
 try:
     from duckduckgo_search import DDGS
@@ -50,30 +51,10 @@ def search_poem_context(clean_text):
     except Exception:
         return ""
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-if GROQ_API_KEY:
-    client = Groq(api_key=GROQ_API_KEY)
-    
-    try:
-        models_list = client.models.list()
-        available_models = [m.id for m in models_list.data]
-    except Exception:
-        available_models = []
-
-    preferred_order = [
-        "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant",
-        "qwen/qwen3-32b",
-        "openai/gpt-oss-120b",
-        "openai/gpt-oss-20b"
-    ]
-    
-    selected_model = "llama-3.1-8b-instant"
-    for pref in preferred_order:
-        if pref in available_models:
-            selected_model = pref
-            break
+if GEMINI_API_KEY:
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
     st.write("---")
     st.markdown("### 📚 1. المراجع والنصوص المراد تحليلها")
@@ -114,78 +95,67 @@ if GROQ_API_KEY:
                     
                     extra_sources = ""
                     if context_content:
-                        extra_sources += f"\n[مرجع المستخدم المرفق]:\n{context_content[:2000]}\n"
+                        extra_sources += f"\n[مرجع المستخدم المرفق]:\n{context_content[:3000]}\n"
                     if web_context:
                         extra_sources += f"\n[نتائج البحث الأدبي]:\n{web_context}\n"
 
                     system_instruction = f"""
-أنت بروفيسور ومحقق علمي أمين في الأدب العربي (الفصيح والشعبي) وعلم العروض والقافية وفق مدرسة الخليل بن أحمد الفراهيدي.
-تلتزم بالأمانة العلمية الصارمة وتُمنع منعاً باتاً من اختلاق معلومات أو نسب نصوص لشعراء لم يكتبوها:
-1. عدد الأبيات المؤكد برمجياً هو: ({verse_count_info}). التزم به حرفياً ولا تغيره.
-2. التمييز اللغوي: حدد أولاً نوع النص بدقة (هل هو شعر فصيح عمودي، أم شعر تفعيلة، أم شعر شعبي/نبطي يعتمد على اللهجة العامية).
-3. قاعدة التوثيق الأمين:
-   - إذا كان النص معروفاً ومؤكداً في التراث أو نتائج البحث المرفقة (مثل شعر المتنبي، شوقي، نزار قباني...) اذكر اسم الشاعر الحقيقي والمناسبة بدقة.
-   - إذا لم تجد دليلاً قاطعاً في نتائج البحث المرفقة أو ذاكرتك المؤكدة على قائل النص (خاصة إذا كان شعراً نبطياً/شعبياً أو محاولة شعرية حديثة غير منشورة)، اكتب بوضوح وأمانة: "نص غير موثق في الدواوين المنشورة (قد يكون نصاً خاصاً أو لشاعر معاصر)"، ويُمنع منعاً باتاً اختراع اسم شاعر أو ديوان وهمي.
-4. علم العروض والقافية: حلل موسيقى النص ووزنه وقافيته بدقة حسب نوعه (فصيح أو شعبي).
-5. التنسيق: اكتب التقرير في فقرات ونقاط واضحة بعناوين فرعية، ولا تستخدم الجداول مطلقاً.
+أنت بروفيسور وعلامة محقق في الأدب العربي (الفصيح والشعبي) وعلم العروض والقافية وفق مدرسة الخليل بن أحمد الفراهيدي.
+تلتزم بالمنهج العلمي الأكاديمي الصارم:
+1. عدد الأبيات المؤكد برمجياً هو: ({verse_count_info}). التزم به حرفياً.
+2. التمييز اللغوي: حدد أولاً نوع النص بدقة (شعر فصيح عمودي، شعر تفعيلة، أم شعر شعبي/نبطي).
+3. الأمانة في التوثيق:
+   - إذا كان النص لشاعر معروف في التراث أو الأدب الحديث (مثل المتنبي، شوقي، نزار قباني...) اذكر اسم الشاعر، الديوان، العصر، والمناسبة التاريخية بدقة تامة.
+   - إذا كان النص شعراً شعبياً غير منشور أو محاولة شعرية خاصة غير موجودة في الدواوين أو نتائج البحث، صرّح بأمانة أنه "نص غير موثق في الدواوين المنشورة" دون اختلاق أسماء شعراء.
+4. الدقة العروضية المطلقة:
+   - اكتب الكتابة العروضية الصحيحة (فك الإدغام، إشباع حركة الروي، حذف همزة الوصل...).
+   - قطّع البيت بالرموز (/ للمتحرك و 0 للساكن).
+   - استخرج التفعيلات بدقة وحدد البحر الشعري الصحيح (مثل: فعولن مفاعيلن = بحر الطويل، وحرف الروي الميم المضمومة).
+5. التنسيق: نظّم التقرير في فقرات ونقاط واضحة بعناوين فرعية دون جداول معقدة.
 """
 
                     user_message = f"""
 النص الشعري المدخل:
 "{user_prompt}"
-
-النص بدون تشكيل:
-"{clean_poem}"
 {extra_sources}
 
-قدم تقريراً أكاديمياً متكاملاً ومفصلاً مقسماً إلى الأقسام الأربعة التالية:
+قدّم تقريراً أكاديمياً متكاملاً ومفصلاً مقسماً إلى الأقسام الأربعة التالية:
 
 ### أولاً: التوثيق التاريخي والأدبي
-- نوع النص الشعري (فصيح عمودي / تفعيلة / شعبي نبطي).
+- نوع النص الشعري.
 - عدد الأبيات: {verse_count_info}.
-- اسم الشاعر والمناسبة (بأمانة علمية تامة دون تخمين).
+- اسم الشاعر، العصر، ومناسبة النص بالتفصيل.
 
 ### ثانياً: الشرح اللغوي والدلالي
-- معاني المفردات والتعابير.
-- الشرح الإجمالي والدلالي العميق للأبيات.
+- معاني المفردات والتراكيب.
+- الشرح الإجمالي والدلالي العميق.
 
-### ثالثاً: التحليل العروضي والإيقاع الموسيقي
-- الكتابة العروضية والتقطيع الصوتي (للشعر الفصيح) أو تحليل الوزن والقافية واللحن (للشعر الشعبي).
-- تحديد البحر الشعري أو الوزن وتفعيلاته وحرف الروي.
+### ثالثاً: التحليل العروضي والقافية
+- الكتابة العروضية للصدر والعجز.
+- التقطيع الصوتي بالرموز (/ و 0).
+- التفعيلات، اسم البحر الشعري، والقافية وحرف الروي وحركته.
 
 ### رابعاً: التحليل البلاغي والجمالي
 - الصور البيانية (التشبيه، الاستعارة، الكناية).
 - المحسنات البديعية والجماليات الأسلوبية.
 """
-                    api_kwargs = {
-                        "messages": [
-                            {"role": "system", "content": system_instruction},
-                            {"role": "user", "content": user_message}
-                        ],
-                        "model": selected_model,
-                        "temperature": 0.1,
-                        "max_tokens": 2500
-                    }
-                    
-                    if "gpt-oss" in selected_model.lower():
-                        api_kwargs["reasoning_effort"] = "low"
-                    elif "qwen" in selected_model.lower():
-                        api_kwargs["reasoning_format"] = "hidden"
-                        api_kwargs["max_tokens"] = 950
-
-                    chat_completion = client.chat.completions.create(**api_kwargs)
+                    response = client.models.generate_content(
+                        model="gemini-2.5-flash",
+                        contents=user_message,
+                        config=types.GenerateContentConfig(
+                            system_instruction=system_instruction,
+                            temperature=0.1,
+                        )
+                    )
                     
                     st.write("---")
                     st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
                     
-                    first_choice = next(iter(chat_completion.choices))
-                    response_text = first_choice.message.content
-                    
-                    if response_text:
-                        st.markdown(response_text)
+                    if response.text:
+                        st.markdown(response.text)
                         st.download_button(
                             label="📥 تحميل التقرير النقدي (ملف نصي)",
-                            data=response_text,
+                            data=response.text,
                             file_name="تقرير_الناقد_الذكي.txt",
                             mime="text/plain"
                         )
@@ -193,9 +163,6 @@ if GROQ_API_KEY:
                         st.warning("⚠️ تعذر استخراج التقرير حالياً، يرجى المحاولة مرة أخرى.")
                         
                 except Exception as e:
-                    if "429" in str(e):
-                        st.error("⚠️ الموقع يشهد ضغطاً حالياً، يرجى الانتظار 30 ثانية ثم المحاولة مجدداً.")
-                    else:
-                        st.error("⚠️ حدث خطأ غير متوقع أثناء المعالجة، يرجى المحاولة مرة أخرى.")
+                    st.error(f"⚠️ حدث خطأ أثناء المعالجة: {e}")
 else:
-    st.info("💡 يرجى التأكد من وضع متغير GROQ_API_KEY داخل منطقة الـ Secrets في إعدادات التطبيق.")
+    st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
