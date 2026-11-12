@@ -1,8 +1,8 @@
 import streamlit as st
 import os
+import time
 from google import genai
 from google.genai import types
-from groq import Groq
 
 st.set_page_config(
     page_title="Smart Critic - الناقد الذكي",
@@ -27,9 +27,10 @@ st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; mar
 st.subheader("التحليل الأدبي والعروضي الصارم بأحدث التقنيات البرمجية")
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
-if GEMINI_API_KEY or GROQ_API_KEY:
+if GEMINI_API_KEY:
+    client = genai.Client(api_key=GEMINI_API_KEY)
+
     st.write("---")
     st.markdown("### 📚 1. المراجع والنصوص المراد تحليلها")
     uploaded_file = st.file_uploader("ارفع الملف أو المرجع العربي (TXT أو PDF):", type=["txt", "pdf"])
@@ -75,8 +76,8 @@ if GEMINI_API_KEY or GROQ_API_KEY:
 4. الدقة العروضية المطلقة:
    - اكتب الكتابة العروضية الصحيحة (فك الإدغام، إشباع حركة الروي، حذف همزة الوصل...).
    - قطّع البيت بالرموز (/ للمتحرك و 0 للساكن).
-   - استخرج التفعيلات بدقة وحدد البحر الشعري الصحيح وحرف الروي وحركته.
-5. التنسيق: نظّم التقرير في فقرات ونقاط واضحة بعناوين فرعية دون جداول معقدة.
+   - استخرج التفعيلات بدقة وحدد البحر الشعري الصحيح وحرف الروي وحركته (مثل: فعولن مفاعيلن = بحر الطويل، والروي الميم المضمومة).
+5. التنسيق: نظّم التقرير في فقرات ونقاط واضحة بعناوين فرعية، ويُمنع استخدام الجداول منعاً باتاً.
 """
 
             user_message = f"""
@@ -84,7 +85,7 @@ if GEMINI_API_KEY or GROQ_API_KEY:
 "{user_prompt}"
 {extra_sources}
 
-قدّم تقريراً أكاديمياً متكاملاً ومفصلاً مقسماً إلى الأقسام الأربعة التالية:
+قدّم تقريراً أكاديمياً متكاملاً ومفصلاً مقسماً إلى الأقسام الأربعة التالية في فقرات ونقاط واضحة دون جداول:
 
 ### أولاً: التوثيق التاريخي والأدبي
 - نوع النص الشعري.
@@ -104,52 +105,37 @@ if GEMINI_API_KEY or GROQ_API_KEY:
 - الصور البيانية (التشبيه، الاستعارة، الكناية).
 - المحسنات البديعية والجماليات الأسلوبية.
 """
-            with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي..."):
+            with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
                 final_report = ""
-                errors_log = []
+                last_error = ""
+                
+                # قائمة نماذج Gemini المتقنة للغة العربية وعلم العروض
+                gemini_models = [
+                    "gemini-3-flash-preview",
+                    "gemini-2.5-flash",
+                    "gemini-2.5-flash-lite"
+                ]
 
-                # المحاولة 1: Gemini بالصيغة القياسية النظيفة
-                if GEMINI_API_KEY:
-                    try:
-                        gemini_client = genai.Client(api_key=GEMINI_API_KEY)
-                        response = gemini_client.models.generate_content(
-                            model="gemini-3.8-flash",
-                            contents=user_message,
-                            config=types.GenerateContentConfig(
-                                system_instruction=system_instruction,
-                                temperature=0.1,
-                            )
-                        )
-                        if response and response.text:
-                            final_report = response.text
-                    except Exception as e1:
-                        errors_log.append(f"Gemini: {e1}")
-
-                # المحاولة 2: Groq بالنماذج المتاحة في حسابك
-                if not final_report and GROQ_API_KEY:
-                    groq_client = Groq(api_key=GROQ_API_KEY)
-                    for g_model in ["llama-3.1-8b-instant", "openai/gpt-oss-120b"]:
+                for attempt in range(2):
+                    for model_name in gemini_models:
                         try:
-                            kwargs = {
-                                "messages": [
-                                    {"role": "system", "content": system_instruction},
-                                    {"role": "user", "content": user_message}
-                                ],
-                                "model": g_model,
-                                "temperature": 0.1,
-                                "max_tokens": 2500
-                            }
-                            if "gpt-oss" in g_model:
-                                kwargs["reasoning_effort"] = "low"
-                                
-                            chat_completion = groq_client.chat.completions.create(**kwargs)
-                            first_choice = next(iter(chat_completion.choices))
-                            if first_choice.message.content:
-                                final_report = first_choice.message.content
+                            response = client.models.generate_content(
+                                model=model_name,
+                                contents=user_message,
+                                config=types.GenerateContentConfig(
+                                    system_instruction=system_instruction,
+                                    temperature=0.1,
+                                )
+                            )
+                            if response and response.text:
+                                final_report = response.text
                                 break
-                        except Exception as e2:
-                            errors_log.append(f"Groq ({g_model}): {e2}")
+                        except Exception as err:
+                            last_error = str(err)
                             continue
+                    if final_report:
+                        break
+                    time.sleep(2)
 
                 st.write("---")
                 st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
@@ -163,8 +149,6 @@ if GEMINI_API_KEY or GROQ_API_KEY:
                         mime="text/plain"
                     )
                 else:
-                    st.error("⚠️ تعذر الحصول على رد. السبب التقني:")
-                    for err in errors_log:
-                        st.code(err)
+                    st.warning("⚠️ خوادم الذكاء الاصطناعي تشهد ضغطاً لحظياً الآن، يرجى الضغط على زر التحليل مرة أخرى بعد ثوانٍ قليلة.")
 else:
-    st.info("💡 يرجى التأكد من إضافة مفاتيح API في إعدادات الـ Secrets الخاصة بالتطبيق.")
+    st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
