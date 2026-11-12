@@ -29,9 +29,10 @@ st.subheader("التحليل الأدبي والعروضي الصارم بأحد
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 if GEMINI_API_KEY:
+    # مهلة 45 ثانية كافية تماماً لكتابة التقرير الأكاديمي الكامل دون انقطاع
     client = genai.Client(
         api_key=GEMINI_API_KEY,
-        http_options=types.HttpOptions(timeout=15000)
+        http_options=types.HttpOptions(timeout=45000)
     )
 
     st.write("---")
@@ -121,13 +122,11 @@ if GEMINI_API_KEY:
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
                 final_report = ""
                 
-                # الاعتماد على أسرع نموذجين نشطين فقط دون جلب قوائم طويلة تسبب التعليق
-                fast_models = ("gemini-2.5-flash", "gemini-3-flash-preview")
-
-                for model_name in fast_models:
+                # الاعتماد المباشر على النموذج الذي نجح في حسابك (gemini-3.8-flash)
+                for attempt in (1, 2, 3):
                     try:
                         response = client.models.generate_content(
-                            model=model_name,
+                            model="gemini-3.8-flash",
                             contents=user_message,
                             config=types.GenerateContentConfig(
                                 system_instruction=system_instruction,
@@ -138,7 +137,7 @@ if GEMINI_API_KEY:
                             final_report = response.text
                             break
                     except Exception:
-                        time.sleep(1)
+                        time.sleep(2)
                         continue
 
                 st.write("---")
