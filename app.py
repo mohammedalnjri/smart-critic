@@ -207,7 +207,7 @@ if GEMINI_API_KEY:
                 if not valid_models:
                     valid_models = ["gemini-3.8-flash", "gemini-3-flash-preview"]
 
-                for model_name in valid_models:
+                                for model_name in valid_models:
                     try:
                         response = client.models.generate_content(
                             model=model_name,
@@ -220,7 +220,7 @@ if GEMINI_API_KEY:
                         time.sleep(1)
                         continue
 
-                                if final_report:
+                if final_report:
                     st.session_state["saved_report"] = final_report
                 else:
                     st.info("⏳ خوادم جوجل تشهد ضغطاً لحظياً في هذه الدقيقة، يرجى الضغط على الزر مرة أخرى بعد قليل.")
@@ -232,4 +232,3 @@ if GEMINI_API_KEY:
         st.download_button("📥 تحميل التقرير النقدي", st.session_state["saved_report"], "report.txt")
 else:
     st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
-
