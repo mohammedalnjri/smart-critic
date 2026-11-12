@@ -143,7 +143,7 @@ if GEMINI_API_KEY:
     st.write("---")
     st.markdown("### ✍️ 2. توجيهات الناقد الذكي")
     user_prompt = st.text_area(
-        "💡 أدخل البيت الشعري في سطرين متتاليين (الصدر ثم العجز)، أو الصق قصيدتك كاملة في المربع أدناه:",
+        "💡 أدخل البيت الشعري في سطرين متتاليين (الصدر ثم العجز)، أو الصق قصيدتك كاملة في المربع أدناه (يفضل وضع التشكيل لأعلى دقة عروضية):",
         value="عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي العَزائِمُ\nوَتَأتِي عَلَى قَدْرِ الكِرامِ المَكارِمُ"
     )
 
@@ -224,15 +224,9 @@ if GEMINI_API_KEY:
                 else:
                     st.info("⏳ خوادم جوجل تشهد ضغطاً لحظياً في هذه الدقيقة، يرجى الضغط على الزر مرة أخرى بعد قليل.")
 
-        if "saved_report" in st.session_state and st.session_state["saved_report"]:
+    if "saved_report" in st.session_state and st.session_state["saved_report"]:
         st.write("---")
         st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
         st.markdown(st.session_state["saved_report"])
         st.download_button(
             label="📥 تحميل التقرير النقدي (ملف نصي)",
-            data=st.session_state["saved_report"],
-            file_name="تقرير_الناقد_الذكي.txt",
-            mime="text/plain"
-        )
-else:
-    st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
