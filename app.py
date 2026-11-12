@@ -223,8 +223,8 @@ if GEMINI_API_KEY:
 
             extra_sources = f"\n[مرجع المستخدم المرفق]:\n{context_content[:3000]}\n" if context_content else ""
             prosody_result = detect_arabic_meter(user_prompt)
-            prosody_directive = f"\n[مرجع عروضي ملزم]:\n{prosody_result}\n" 
-            if prosody_result else "" 
+            prosody_directive = prosody_result
+
             full_prompt = f"""أنت بروفيسور محقق في الأدب العربي (الفصيح والشعبي والحُمَيني) وعلم العروض.
             {prosody_directive}
 1. عدد الأبيات/الأشطر المؤكد هو: ({verse_count_info}). التزم به حرفياً.
