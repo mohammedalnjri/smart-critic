@@ -29,10 +29,7 @@ st.subheader("التحليل الأدبي والعروضي الصارم بأحد
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 if GEMINI_API_KEY:
-    client = genai.Client(
-        api_key=GEMINI_API_KEY,
-        http_options=types.HttpOptions(timeout=25000)
-    )
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
     st.write("---")
     st.markdown("### 📚 1. المراجع والنصوص المراد تحليلها")
@@ -121,7 +118,16 @@ if GEMINI_API_KEY:
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
                 final_report = ""
                 
-                for model_name in ("gemini-3.8-flash", "gemini-3-flash-preview"):
+                # قائمة خوادم Gemini المستقرة والأقل ازدحاماً بالترتيب
+                stable_gemini_models = (
+                    "gemini-2.5-flash",
+                    "gemini-2.5-flash-lite",
+                    "gemini-3.8-flash",
+                    "gemini-2.5-pro",
+                    "gemini-3-flash-preview"
+                )
+
+                for model_name in stable_gemini_models:
                     try:
                         response = client.models.generate_content(
                             model=model_name,
@@ -135,15 +141,13 @@ if GEMINI_API_KEY:
                             final_report = response.text
                             break
                     except Exception:
-                        time.sleep(1)
                         continue
 
                 if final_report:
                     st.session_state["saved_report"] = final_report
                 else:
-                    st.info("⏳ الخادم مزدحم في هذه اللحظة، اضغط على الزر مرة أخرى بعد 5 ثوانٍ.")
+                    st.info("⏳ جميع الخوادم في ذروة الانشغال الآن، حاول مرة أخرى بعد لحظات.")
 
-    # عرض التقرير المحفوظ حتى لا يختفي أبداً
     if "saved_report" in st.session_state and st.session_state["saved_report"]:
         st.write("---")
         st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
