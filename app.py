@@ -41,15 +41,24 @@ def create_arabic_pdf(report_text, poem_text):
     pdf = FPDF()
     pdf.set_margins(10, 10, 10)
     pdf.add_page()
-    pdf.add_font("DejaVu", "", fm.findfont("DejaVu Sans"))
-    pdf.set_font("DejaVu", size=15)
+    bold_font = fm.findfont("DejaVu Sans:weight=bold")
+    pdf.add_font("ArabicBold", "", bold_font)
+    
+    # ترويسة المنصة واسم المبرمج بحجم أكبر ولون مميز
+    pdf.set_font("ArabicBold", size=18)
+    pdf.set_text_color(20, 80, 160)
     pdf.set_x(10)
-    pdf.multi_cell(190, 10, shape_arabic("تقرير منصة الناقد الذكي - Smart Critic"), align="C")
-    pdf.set_font("DejaVu", size=11)
+    pdf.multi_cell(190, 11, shape_arabic("منصة الناقد الذكي - Smart Critic"), align="C")
+    
+    pdf.set_font("ArabicBold", size=13)
+    pdf.set_text_color(165, 105, 15)
     pdf.set_x(10)
-    pdf.multi_cell(190, 8, shape_arabic("تصميم وتطوير المبرمج: محمد النجري | smart-critic.streamlit.app"), align="C")
-    pdf.ln(5)
-
+    pdf.multi_cell(190, 9, shape_arabic("تصميم وتطوير المبرمج: محمد النجري | smart-critic.streamlit.app"), align="C")
+    pdf.ln(6)
+    
+    # نص التقرير بالخط الغامق الواضح
+    pdf.set_font("ArabicBold", size=11)
+    pdf.set_text_color(25, 25, 25)
     raw_all = poem_text + "\n\n" + report_text
     no_tashkeel = re.sub(r'[\u064B-\u065F\u0670*#`]', '', raw_all)
     for line in no_tashkeel.split('\n'):
