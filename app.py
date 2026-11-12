@@ -10,6 +10,7 @@ st.set_page_config(
 )
 
 st.title("🤖 منصة الناقد الذكي - Smart Critic")
+# إضافة اسم المبرمج المصمم بشكل منسق وجذاب تحت العنوان مباشرة
 st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; margin-top: -15px;'>🎨 تصميم المبرمج محمد النجري</p>", unsafe_allow_html=True)
 st.subheader("التحليل الأدبي والعروضي الصارم بأحدث التقنيات البرمجية")
 
@@ -71,13 +72,27 @@ if GROQ_API_KEY:
                         messages=[
                             {"role": "user", "content": full_prompt}
                         ],
-                        model="openai/gpt-oss-20b",
+                        model="llama-3.3-70b-versatile",
                         temperature=0.2,
+                        max_tokens=4096
                     )
                     
                     st.write("---")
                     st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
-                    st.write(chat_completion.choices[0].message.content)
+                    
+                    response_text = chat_completion.choices.message.content
+                    if response_text:
+                        st.markdown(response_text)
+                        
+                        # زر إضافي لتحميل التقرير كملف نصي
+                        st.download_button(
+                            label="📥 تحميل التقرير النقدي (ملف نصي)",
+                            data=response_text,
+                            file_name="تقرير_الناقد_الذكي.txt",
+                            mime="text/plain"
+                        )
+                    else:
+                        st.warning("⚠️ لم يُرجع النموذج أي نص، يرجى الضغط على زر التحليل مرة أخرى.")
                     
                 except Exception as e:
                     st.error(f"⚠️ حدث خطأ أثناء المعالجة: {e}")
