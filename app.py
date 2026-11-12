@@ -224,10 +224,10 @@ if GEMINI_API_KEY:
                 else:
                     st.info("⏳ خوادم جوجل تشهد ضغطاً لحظياً في هذه الدقيقة، يرجى الضغط على الزر مرة أخرى بعد قليل.")
 
-    if "saved_report" in st.session_state and st.session_state["saved_report"]:
+        if "saved_report" in st.session_state and st.session_state["saved_report"]:
         st.write("---")
         st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
-                st.markdown(st.session_state["saved_report"])
+        st.markdown(st.session_state["saved_report"])
         st.download_button(
             label="📥 تحميل التقرير النقدي (ملف نصي)",
             data=st.session_state["saved_report"],
@@ -236,4 +236,3 @@ if GEMINI_API_KEY:
         )
 else:
     st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
-
