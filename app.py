@@ -1,7 +1,6 @@
 import streamlit as st
 import os
 import time
-import re
 from google import genai
 from google.genai import types
 
@@ -109,7 +108,6 @@ if GEMINI_API_KEY:
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
                 final_report = ""
                 
-                # جلب جميع نماذج Gemini المفعلة في حسابك تلقائياً وتصفيتها
                 active_models = []
                 try:
                     for m in client.models.list():
@@ -120,15 +118,13 @@ if GEMINI_API_KEY:
                 except Exception:
                     pass
 
-                # ترتيب الأولوية للنماذج المتاحة
                 priority = ["gemini-3.8-flash", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-3.8-pro", "gemini-2.5-pro"]
                 ordered_models = [p for p in priority if p in active_models] + [m for m in active_models if m not in priority]
                 
                 if not ordered_models:
                     ordered_models = priority
 
-                # إعادة المحاولة الصامتة بتأخير تصاعدي حتى ينجح أحد الخوادم
-                for wait_sec in:
+                for wait_sec in (0, 2, 4, 6):
                     if wait_sec > 0:
                         time.sleep(wait_sec)
                     for model_name in ordered_models:
