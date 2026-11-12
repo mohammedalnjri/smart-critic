@@ -5,5 +5,5 @@ arabic_reshaper
 python-bidi
 duckduckgo-search
 google-genai
-
+fpdf2
 
