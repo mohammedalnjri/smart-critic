@@ -1,7 +1,6 @@
 import streamlit as st
 import os
 import re
-import time
 from google import genai
 from google.genai import types
 
@@ -46,7 +45,7 @@ def search_poem_context(clean_text):
         query = f'"{first_line}" قصيدة الشاعر'
         results_text = []
         with DDGS() as ddgs:
-            for r in ddgs.text(query, region='wt-wt', max_results=3):
+            for r in ddgs.text(query, region='wt-wt', max_results=2):
                 results_text.append(f"- {r.get('title', '')}: {r.get('body', '')}")
         return "\n".join(results_text)
     except Exception:
@@ -89,18 +88,17 @@ if GEMINI_API_KEY:
             else:
                 verse_count_info = f"{num_lines} أسطر/أشطر شعرية"
 
-            with st.spinner("🔄 جاري التحقق من المصادر واستخراج التحليل الأكاديمي والعروضي..."): 
-                try:
-                    clean_poem = remove_diacritics(user_prompt)
-                    web_context = search_poem_context(clean_poem)
-                    
-                    extra_sources = ""
-                    if context_content:
-                        extra_sources += f"\n[مرجع المستخدم المرفق]:\n{context_content[:3000]}\n"
-                    if web_context:
-                        extra_sources += f"\n[نتائج البحث الأدبي]:\n{web_context}\n"
+            with st.spinner("🔄 جاري التحقق السريع من المصادر..."): 
+                clean_poem = remove_diacritics(user_prompt)
+                web_context = search_poem_context(clean_poem)
 
-                    system_instruction = f"""
+            extra_sources = ""
+            if context_content:
+                extra_sources += f"\n[مرجع المستخدم المرفق]:\n{context_content[:3000]}\n"
+            if web_context:
+                extra_sources += f"\n[نتائج البحث الأدبي]:\n{web_context}\n"
+
+            system_instruction = f"""
 أنت بروفيسور وعلامة محقق في الأدب العربي (الفصيح والشعبي) وعلم العروض والقافية وفق مدرسة الخليل بن أحمد الفراهيدي.
 تلتزم بالمنهج العلمي الأكاديمي الصارم:
 1. عدد الأبيات المؤكد برمجياً هو: ({verse_count_info}). التزم به حرفياً.
@@ -111,11 +109,11 @@ if GEMINI_API_KEY:
 4. الدقة العروضية المطلقة:
    - اكتب الكتابة العروضية الصحيحة (فك الإدغام، إشباع حركة الروي، حذف همزة الوصل...).
    - قطّع البيت بالرموز (/ للمتحرك و 0 للساكن).
-   - استخرج التفعيلات بدقة وحدد البحر الشعري الصحيح (مثل: فعولن مفاعيلن = بحر الطويل، وحرف الروي الميم المضمومة).
+   - استخرج التفعيلات بدقة وحدد البحر الشعري الصحيح وحرف الروي وحركته.
 5. التنسيق: نظّم التقرير في فقرات ونقاط واضحة بعناوين فرعية دون جداول معقدة.
 """
 
-                    user_message = f"""
+            user_message = f"""
 النص الشعري المدخل:
 "{user_prompt}"
 {extra_sources}
@@ -140,51 +138,46 @@ if GEMINI_API_KEY:
 - الصور البيانية (التشبيه، الاستعارة، الكناية).
 - المحسنات البديعية والجماليات الأسلوبية.
 """
-                    # جلب قائمة النماذج المتاحة في حسابك تلقائياً وتجربتها
-                    models_to_try = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
-                    try:
-                        for m in client.models.list():
-                            m_name = m.name.replace("models/", "")
-                            if "gemini" in m_name and "flash" in m_name and m_name not in models_to_try:
-                                models_to_try.append(m_name)
-                    except Exception:
-                        pass
+            st.write("---")
+            st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
+            
+            # مكان عرض النص المباشر أثناء الكتابة
+            report_placeholder = st.empty()
+            full_response = ""
+            
+            models_to_try = ["gemini-3.8-flash", "gemini-3.8-flash-lite", "gemini-3.8-pro"]
+            success = False
 
-                    response = None
-                    last_error = ""
-
-                    for model_name in models_to_try:
-                        try:
-                            response = client.models.generate_content(
-                                model=model_name,
-                                contents=user_message,
-                                config=types.GenerateContentConfig(
-                                    system_instruction=system_instruction,
-                                    temperature=0.1,
-                                )
-                            )
-                            if response and response.text:
-                                break
-                        except Exception as err:
-                            last_error = str(err)
-                            time.sleep(1)
-                            continue
-
-                    st.write("---")
-                    st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
-                    
-                    if response and response.text:
-                        st.markdown(response.text)
-                        st.download_button(
-                            label="📥 تحميل التقرير النقدي (ملف نصي)",
-                            data=response.text,
-                            file_name="تقرير_الناقد_الذكي.txt",
-                            mime="text/plain"
+            for model_name in models_to_try:
+                try:
+                    response_stream = client.models.generate_content_stream(
+                        model=model_name,
+                        contents=user_message,
+                        config=types.GenerateContentConfig(
+                            system_instruction=system_instruction,
+                            temperature=0.1,
                         )
-                    else:
-                        st.warning(f"⚠️ تعذر إكمال الطلب حالياً. تفاصيل الخادم: {last_error}")
-                        
-                except Exception as e:
-                    st.error(f"⚠️ حدث خطأ أثناء المعالجة: {e}")
+                    )
+                    for chunk in response_stream:
+                        if chunk.text:
+                            full_response += chunk.text
+                            report_placeholder.markdown(full_response + " ▌")
+                    
+                    report_placeholder.markdown(full_response)
+                    success = True
+                    break
+                except Exception:
+                    full_response = ""
+                    continue
+
+            if success and full_response:
+                st.download_button(
+                    label="📥 تحميل التقرير النقدي (ملف نصي)",
+                    data=full_response,
+                    file_name="تقرير_الناقد_الذكي.txt",
+                    mime="text/plain"
+                )
+            else:
+                st.warning("⚠️ الخوادم تشهد ضغطاً لحظياً، يرجى الضغط على زر التحليل مرة أخرى.")
 else:
     st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
