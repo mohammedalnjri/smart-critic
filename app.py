@@ -217,7 +217,7 @@ if GEMINI_API_KEY:
                 valid_models = []
                 for m in client.models.list():
                     name = m.name.replace("models/", "")
-                                    for m in client.models.list():
+                for m in client.models.list():
                     name = m.name.replace("models/", "")
                     if "gemini" in name and "flash" in name and not any(x in name for x in ("vision", "embedding", "tts", "image", "audio", "1.5", "2.0", "2.5")):
                         valid_models.append(name)
