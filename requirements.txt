@@ -3,3 +3,5 @@ groq
 reportlab
 arabic_reshaper
 python-bidi
+duckduckgo-search
+
