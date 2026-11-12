@@ -71,6 +71,9 @@ def create_arabic_pdf(report_text, poem_text):
     pdf.set_text_color(25, 25, 25)
     raw_all = poem_text + "\n\n" + report_text
     no_tashkeel = re.sub(r'[\u064B-\u065F\u0670*#`]', '', raw_all)
+    no_tashkeel = no_tashkeel.replace("/", "|")
+    no_tashkeel = no_tashkeel.replace("0", "o")
+
     for line in no_tashkeel.split('\n'):
         if line.strip():
             pdf.set_x(10)
