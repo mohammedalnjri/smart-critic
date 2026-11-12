@@ -29,7 +29,10 @@ st.subheader("التحليل الأدبي والعروضي الصارم بأحد
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 if GEMINI_API_KEY:
-    client = genai.Client(api_key=GEMINI_API_KEY)
+    client = genai.Client(
+        api_key=GEMINI_API_KEY,
+        http_options=types.HttpOptions(timeout=15000)
+    )
 
     st.write("---")
     st.markdown("### 📚 1. المراجع والنصوص المراد تحليلها")
@@ -118,42 +121,25 @@ if GEMINI_API_KEY:
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
                 final_report = ""
                 
-                active_models = []
-                try:
-                    for m in client.models.list():
-                        m_name = m.name.replace("models/", "")
-                        if "gemini" in m_name and ("flash" in m_name or "pro" in m_name):
-                            if "vision" not in m_name and "embedding" not in m_name and "tts" not in m_name:
-                                active_models.append(m_name)
-                except Exception:
-                    pass
+                # الاعتماد على أسرع نموذجين نشطين فقط دون جلب قوائم طويلة تسبب التعليق
+                fast_models = ("gemini-2.5-flash", "gemini-3-flash-preview")
 
-                priority = ["gemini-3.8-flash", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-3.8-pro", "gemini-2.5-pro"]
-                ordered_models = [p for p in priority if p in active_models] + [m for m in active_models if m not in priority]
-                
-                if not ordered_models:
-                    ordered_models = priority
-
-                for wait_sec in (0, 2, 4, 6):
-                    if wait_sec > 0:
-                        time.sleep(wait_sec)
-                    for model_name in ordered_models:
-                        try:
-                            response = client.models.generate_content(
-                                model=model_name,
-                                contents=user_message,
-                                config=types.GenerateContentConfig(
-                                    system_instruction=system_instruction,
-                                    temperature=0.1,
-                                )
+                for model_name in fast_models:
+                    try:
+                        response = client.models.generate_content(
+                            model=model_name,
+                            contents=user_message,
+                            config=types.GenerateContentConfig(
+                                system_instruction=system_instruction,
+                                temperature=0.1,
                             )
-                            if response and response.text:
-                                final_report = response.text
-                                break
-                        except Exception:
-                            continue
-                    if final_report:
-                        break
+                        )
+                        if response and response.text:
+                            final_report = response.text
+                            break
+                    except Exception:
+                        time.sleep(1)
+                        continue
 
                 st.write("---")
                 st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
