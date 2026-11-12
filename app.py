@@ -38,7 +38,7 @@ def shape_arabic(text):
     return get_display(reshaped)
 
     def create_arabic_pdf(report_text, poem_text):
-    font_path = ""
+        font_path = ""
     for root, dirs, files in os.walk("/usr/share/fonts"):
     for f in files:
             if f.endswith(".ttf"):
