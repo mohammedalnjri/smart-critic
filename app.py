@@ -1,14 +1,7 @@
 import streamlit as st
 import os
-import re
 from google import genai
 from google.genai import types
-
-try:
-    from duckduckgo_search import DDGS
-    HAS_SEARCH = True
-except ImportError:
-    HAS_SEARCH = False
 
 st.set_page_config(
     page_title="Smart Critic - الناقد الذكي",
@@ -31,25 +24,6 @@ st.markdown("""
 st.title("🤖 منصة الناقد الذكي - Smart Critic")
 st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; margin-top: -15px;'>🎨 تصميم المبرمج محمد النجري</p>", unsafe_allow_html=True)
 st.subheader("التحليل الأدبي والعروضي الصارم بأحدث التقنيات البرمجية")
-
-def remove_diacritics(text):
-    arabic_diacritics = re.compile(r'[\u064B-\u065F\u0670]')
-    return re.sub(arabic_diacritics, '', text)
-
-def search_poem_context(clean_text):
-    if not HAS_SEARCH:
-        return ""
-    try:
-        lines = [l.strip() for l in clean_text.split('\n') if l.strip()]
-        first_line = next(iter(lines))[:80]
-        query = f'"{first_line}" قصيدة الشاعر'
-        results_text = []
-        with DDGS() as ddgs:
-            for r in ddgs.text(query, region='wt-wt', max_results=2):
-                results_text.append(f"- {r.get('title', '')}: {r.get('body', '')}")
-        return "\n".join(results_text)
-    except Exception:
-        return ""
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
@@ -88,15 +62,7 @@ if GEMINI_API_KEY:
             else:
                 verse_count_info = f"{num_lines} أسطر/أشطر شعرية"
 
-            with st.spinner("🔄 جاري التحقق من المصادر..."): 
-                clean_poem = remove_diacritics(user_prompt)
-                web_context = search_poem_context(clean_poem)
-
-            extra_sources = ""
-            if context_content:
-                extra_sources += f"\n[مرجع المستخدم المرفق]:\n{context_content[:3000]}\n"
-            if web_context:
-                extra_sources += f"\n[نتائج البحث الأدبي]:\n{web_context}\n"
+            extra_sources = f"\n[مرجع المستخدم المرفق]:\n{context_content[:3000]}\n" if context_content else ""
 
             system_instruction = f"""
 أنت بروفيسور وعلامة محقق في الأدب العربي (الفصيح والشعبي) وعلم العروض والقافية وفق مدرسة الخليل بن أحمد الفراهيدي.
@@ -105,7 +71,7 @@ if GEMINI_API_KEY:
 2. التمييز اللغوي: حدد أولاً نوع النص بدقة (شعر فصيح عمودي، شعر تفعيلة، أم شعر شعبي/نبطي).
 3. الأمانة في التوثيق:
    - إذا كان النص لشاعر معروف في التراث أو الأدب الحديث (مثل المتنبي، شوقي، نزار قباني...) اذكر اسم الشاعر، الديوان، العصر، والمناسبة التاريخية بدقة تامة.
-   - إذا كان النص شعراً شعبياً غير منشور أو محاولة شعرية خاصة غير موجودة في الدواوين أو نتائج البحث، صرّح بأمانة أنه "نص غير موثق في الدواوين المنشورة" دون اختلاق أسماء شعراء.
+   - إذا كان النص شعراً شعبياً غير منشور أو محاولة شعرية خاصة غير موجودة في الدواوين، صرّح بأمانة أنه "نص غير موثق في الدواوين المنشورة" دون اختلاق أسماء شعراء.
 4. الدقة العروضية المطلقة:
    - اكتب الكتابة العروضية الصحيحة (فك الإدغام، إشباع حركة الروي، حذف همزة الوصل...).
    - قطّع البيت بالرموز (/ للمتحرك و 0 للساكن).
@@ -144,16 +110,8 @@ if GEMINI_API_KEY:
             report_placeholder = st.empty()
             full_response = ""
             
-            # جلب جميع النماذج المفعلة في مفتاحك وتجربتها بالبث المباشر
-            models_to_try = ["gemini-3.8-flash"]
-            try:
-                for m in client.models.list():
-                    m_name = m.name.replace("models/", "")
-                    if "gemini" in m_name and ("flash" in m_name or "pro" in m_name) and m_name not in models_to_try:
-                        models_to_try.append(m_name)
-            except Exception:
-                pass
-
+            # تجربة أسرع نموذجين مباشرين فقط دون إضاعة الوقت في قوائم طويلة
+            models_to_try = ["gemini-3.8-flash", "gemini-flash-latest"]
             success = False
             last_error = ""
 
@@ -189,6 +147,6 @@ if GEMINI_API_KEY:
                     mime="text/plain"
                 )
             else:
-                st.warning(f"⚠️ الخوادم تشهد ضغطاً لحظياً، يرجى المحاولة بعد ثوانٍ. ({last_error})")
+                st.warning(f"⚠️ الخوادم مشغولة حالياً، حاول بعد لحظات. ({last_error})")
 else:
     st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
