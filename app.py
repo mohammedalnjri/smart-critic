@@ -2,7 +2,11 @@ import streamlit as st
 import os
 import re
 import time
+import urllib.request
 from google import genai
+from fpdf import FPDF
+import arabic_reshaper
+from bidi.algorithm import get_display
 
 st.set_page_config(
     page_title="Smart Critic - الناقد الذكي",
@@ -26,6 +30,63 @@ st.title("🤖 منصة الناقد الذكي - Smart Critic")
 st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; margin-top: -15px;'>🎨 تصميم المبرمج محمد النجري</p>", unsafe_allow_html=True)
 st.subheader("التحليل الأدبي والعروضي الصارم بأحدث التقنيات البرمجية")
 
+# ==========================================
+# دالة إنشاء ملف PDF عربي منسق بخط أميري
+# ==========================================
+def shape_arabic(text):
+    reshaped = arabic_reshaper.reshape(text)
+    return get_display(reshaped)
+
+def create_arabic_pdf(report_text, poem_text):
+    font_path = "Amiri-Regular.ttf"
+    if not os.path.exists(font_path):
+        url = "https://github.com"
+        urllib.request.urlretrieve(url, font_path)
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.add_font("Amiri", "", font_path)
+    pdf.set_font("Amiri", size=18)
+
+    # ترويسة التقرير
+    pdf.set_text_color(30, 90, 160)
+    pdf.cell(0, 12, shape_arabic("تقرير منصة الناقد الذكي - Smart Critic"), new_x="LMARGIN", new_y="NEXT", align="C")
+    pdf.set_font("Amiri", size=12)
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(0, 8, shape_arabic("تصميم المبرمج محمد النجري"), new_x="LMARGIN", new_y="NEXT", align="C")
+    pdf.ln(5)
+
+    # النص الشعري المدخل
+    pdf.set_font("Amiri", size=13)
+    pdf.set_text_color(0, 100, 60)
+    pdf.cell(0, 10, shape_arabic("النص الشعري المحلل:"), new_x="LMARGIN", new_y="NEXT", align="R")
+    pdf.set_text_color(20, 20, 20)
+    for p_line in poem_text.strip().split('\n'):
+        if p_line.strip():
+            pdf.multi_cell(0, 8, shape_arabic(p_line.strip()), align="C")
+    pdf.ln(5)
+
+    # محتوى التقرير
+    clean_report = re.sub(r'[*#`]', '', report_text)
+    for line in clean_report.split('\n'):
+        stripped = line.strip()
+        if not stripped:
+            pdf.ln(3)
+            continue
+        if stripped.startswith(("أولاً:", "ثانياً:", "ثالثاً:", "رابعاً:")):
+            pdf.set_font("Amiri", size=15)
+            pdf.set_text_color(30, 90, 160)
+            pdf.multi_cell(0, 10, shape_arabic(stripped), align="R")
+        else:
+            pdf.set_font("Amiri", size=12)
+            pdf.set_text_color(30, 30, 30)
+            pdf.multi_cell(0, 8, shape_arabic(stripped), align="R")
+
+    return bytes(pdf.output())
+
+# ==========================================
+# محرك التحليل العروضي الرياضي المدمج
+# ==========================================
 def normalize_arabic(text):
     text = re.sub(r'[\u064B-\u065F\u0670]', '', text)
     text = re.sub(r'[أإآ]', 'ا', text)
@@ -177,58 +238,3 @@ if GEMINI_API_KEY:
 4. منهجية التحليل العروضي والموسيقي (حسب نوع النص):
    - **أولاً: إذا كان النص شعراً فصيحاً:** حلله وفق البحور الخليلية الـ 16 وجوازاتها، والتزم بتفعيلات بحر واحد موحد للقصيدة، ولا تشِر في نص التقرير إلى أي عبارات تقنية مثل "المحرك العروضي" بل ادخل في التحليل مباشرة.
    - **ثانياً: إذا كان النص شعراً شعبياً أو حُمَينياً أو زاملاً:**
-     * لا تحاكمه بقوانين البحور الفصيحة الصارمة ولا تصفه بالاضطراب لمجرد عاميته؛ بل حلل **الإيقاع الصوتي واللحن الإنشادي** ومدى توازن الأشطر عند الغناء والإنشاد، وقدّم ملاحظات لطيفة لتجويد اللحن إن وجد تفاوت في طول أحد الأشطر.
-     * القافية في الشعر الشعبي والإنشادي تكون **مقيدة (ساكنة في الوقف)** غالباً ما لم تُشبع بحرف مد، فلا تصفها بأنها متحركة.
-     * **دقة المصطلح:** لا تخلط أبداً في مصطلح «الإقواء»؛ فالإقواء هو اختلاف حركة الروي نفسه، أما اختلاف الحرف الذي يسبق الروي (مثل الألف والياء والراء قبل الحاء) فيُسمى **سناد الردف** وهو مقبول وشائع في الشعر الشعبي والغنائي.
-5. التنسيق: نظّم التقرير في فقرات ونقاط واضحة بعناوين فرعية، ويُمنع استخدام الجداول منعاً باتاً.
-
-النص الشعري المطلوب تحليله:
-"{user_prompt}"
-{extra_sources}
-
-قدّم التقرير مقسماً إلى الأقسام الأربعة التالية:
-### أولاً: التوثيق التاريخي والأدبي
-### ثانياً: الشرح اللغوي والدلالي
-### ثالثاً: التحليل العروضي والإيقاع الموسيقي
-### رابعاً: التحليل البلاغي والجمالي
-"""
-            with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
-                final_report = ""
-                valid_models = []
-                try:
-                    for m in client.models.list():
-                        name = m.name.replace("models/", "")
-                        if "gemini" in name and ("flash" in name or "pro" in name):
-                            if not any(x in name for x in ("vision", "embedding", "tts", "image", "audio", "1.5", "2.0", "2.5")):
-                                valid_models.append(name)
-                except Exception:
-                    valid_models = ["gemini-3.8-flash", "gemini-3-flash-preview"]
-
-                if not valid_models:
-                    valid_models = ["gemini-3.8-flash", "gemini-3-flash-preview"]
-
-                for model_name in valid_models:
-                    try:
-                        response = client.models.generate_content(
-                            model=model_name,
-                            contents=full_prompt
-                        )
-                        if response and response.text:
-                            final_report = response.text
-                            break
-                    except Exception:
-                        time.sleep(1)
-                        continue
-
-                if final_report:
-                    st.session_state["saved_report"] = final_report
-                else:
-                    st.info("⏳ خوادم جوجل تشهد ضغطاً لحظياً في هذه الدقيقة، يرجى الضغط على الزر مرة أخرى بعد قليل.")
-
-    if "saved_report" in st.session_state and st.session_state["saved_report"]:
-        st.write("---")
-        st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
-        st.markdown(st.session_state["saved_report"])
-        st.download_button("📥 تحميل التقرير النقدي", st.session_state["saved_report"], "report.txt")
-else:
-    st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
