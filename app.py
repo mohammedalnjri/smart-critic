@@ -1,15 +1,7 @@
 import streamlit as st
 import os
-import re
-import time
 from google import genai
 from google.genai import types
-
-try:
-    from duckduckgo_search import DDGS
-    HAS_SEARCH = True
-except ImportError:
-    HAS_SEARCH = False
 
 st.set_page_config(
     page_title="Smart Critic - الناقد الذكي",
@@ -32,25 +24,6 @@ st.markdown("""
 st.title("🤖 منصة الناقد الذكي - Smart Critic")
 st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; margin-top: -15px;'>🎨 تصميم المبرمج محمد النجري</p>", unsafe_allow_html=True)
 st.subheader("التحليل الأدبي والعروضي الصارم بأحدث التقنيات البرمجية")
-
-def remove_diacritics(text):
-    arabic_diacritics = re.compile(r'[\u064B-\u065F\u0670]')
-    return re.sub(arabic_diacritics, '', text)
-
-def search_poem_context(clean_text):
-    if not HAS_SEARCH:
-        return ""
-    try:
-        lines = [l.strip() for l in clean_text.split('\n') if l.strip()]
-        first_line = next(iter(lines))[:80]
-        query = f'"{first_line}" قصيدة الشاعر'
-        results_text = []
-        with DDGS() as ddgs:
-            for r in ddgs.text(query, region='wt-wt', max_results=3):
-                results_text.append(f"- {r.get('title', '')}: {r.get('body', '')}")
-        return "\n".join(results_text)
-    except Exception:
-        return ""
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
@@ -89,33 +62,24 @@ if GEMINI_API_KEY:
             else:
                 verse_count_info = f"{num_lines} أسطر/أشطر شعرية"
 
-            with st.spinner("🔄 جاري التحقق من المصادر واستخراج التحليل الأكاديمي والعروضي..."): 
-                try:
-                    clean_poem = remove_diacritics(user_prompt)
-                    web_context = search_poem_context(clean_poem)
-                    
-                    extra_sources = ""
-                    if context_content:
-                        extra_sources += f"\n[مرجع المستخدم المرفق]:\n{context_content[:3000]}\n"
-                    if web_context:
-                        extra_sources += f"\n[نتائج البحث الأدبي]:\n{web_context}\n"
+            extra_sources = f"\n[مرجع المستخدم المرفق]:\n{context_content[:3000]}\n" if context_content else ""
 
-                    system_instruction = f"""
+            system_instruction = f"""
 أنت بروفيسور وعلامة محقق في الأدب العربي (الفصيح والشعبي) وعلم العروض والقافية وفق مدرسة الخليل بن أحمد الفراهيدي.
 تلتزم بالمنهج العلمي الأكاديمي الصارم:
 1. عدد الأبيات المؤكد برمجياً هو: ({verse_count_info}). التزم به حرفياً.
 2. التمييز اللغوي: حدد أولاً نوع النص بدقة (شعر فصيح عمودي، شعر تفعيلة، أم شعر شعبي/نبطي).
 3. الأمانة في التوثيق:
    - إذا كان النص لشاعر معروف في التراث أو الأدب الحديث (مثل المتنبي، شوقي، نزار قباني...) اذكر اسم الشاعر، الديوان، العصر، والمناسبة التاريخية بدقة تامة.
-   - إذا كان النص شعراً شعبياً غير منشور أو محاولة شعرية خاصة غير موجودة في الدواوين أو نتائج البحث، صرّح بأمانة أنه "نص غير موثق في الدواوين المنشورة" دون اختلاق أسماء شعراء.
+   - إذا كان النص شعراً شعبياً غير منشور أو محاولة شعرية خاصة غير موجودة في الدواوين، صرّح بأمانة أنه "نص غير موثق في الدواوين المنشورة" دون اختلاق أسماء شعراء.
 4. الدقة العروضية المطلقة:
    - اكتب الكتابة العروضية الصحيحة (فك الإدغام، إشباع حركة الروي، حذف همزة الوصل...).
    - قطّع البيت بالرموز (/ للمتحرك و 0 للساكن).
-   - استخرج التفعيلات بدقة وحدد البحر الشعري الصحيح (مثل: فعولن مفاعيلن = بحر الطويل، وحرف الروي الميم المضمومة).
+   - استخرج التفعيلات بدقة وحدد البحر الشعري الصحيح وحرف الروي وحركته.
 5. التنسيق: نظّم التقرير في فقرات ونقاط واضحة بعناوين فرعية دون جداول معقدة.
 """
 
-                    user_message = f"""
+            user_message = f"""
 النص الشعري المدخل:
 "{user_prompt}"
 {extra_sources}
@@ -140,51 +104,39 @@ if GEMINI_API_KEY:
 - الصور البيانية (التشبيه، الاستعارة، الكناية).
 - المحسنات البديعية والجماليات الأسلوبية.
 """
-                    # جلب قائمة النماذج المتاحة في حسابك تلقائياً وتجربتها
-                    models_to_try = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+            with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي..."):
+                response = None
+                last_error = ""
+                
+                for model_name in ["gemini-3.8-flash", "gemini-flash-latest"]:
                     try:
-                        for m in client.models.list():
-                            m_name = m.name.replace("models/", "")
-                            if "gemini" in m_name and "flash" in m_name and m_name not in models_to_try:
-                                models_to_try.append(m_name)
-                    except Exception:
-                        pass
-
-                    response = None
-                    last_error = ""
-
-                    for model_name in models_to_try:
-                        try:
-                            response = client.models.generate_content(
-                                model=model_name,
-                                contents=user_message,
-                                config=types.GenerateContentConfig(
-                                    system_instruction=system_instruction,
-                                    temperature=0.1,
-                                )
+                        response = client.models.generate_content(
+                            model=model_name,
+                            contents=user_message,
+                            config=types.GenerateContentConfig(
+                                system_instruction=system_instruction,
+                                temperature=0.1,
+                                thinking_config=types.ThinkingConfig(thinking_budget=0)
                             )
-                            if response and response.text:
-                                break
-                        except Exception as err:
-                            last_error = str(err)
-                            time.sleep(1)
-                            continue
-
-                    st.write("---")
-                    st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
-                    
-                    if response and response.text:
-                        st.markdown(response.text)
-                        st.download_button(
-                            label="📥 تحميل التقرير النقدي (ملف نصي)",
-                            data=response.text,
-                            file_name="تقرير_الناقد_الذكي.txt",
-                            mime="text/plain"
                         )
-                    else:
-                        st.warning(f"⚠️ تعذر إكمال الطلب حالياً. تفاصيل الخادم: {last_error}")
-                        
-                except Exception as e:
-                    st.error(f"⚠️ حدث خطأ أثناء المعالجة: {e}")
+                        if response and response.text:
+                            break
+                    except Exception as err:
+                        last_error = str(err)
+                        continue
+
+                st.write("---")
+                st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
+                
+                if response and response.text:
+                    st.markdown(response.text)
+                    st.download_button(
+                        label="📥 تحميل التقرير النقدي (ملف نصي)",
+                        data=response.text,
+                        file_name="تقرير_الناقد_الذكي.txt",
+                        mime="text/plain"
+                    )
+                else:
+                    st.error(f"⚠️ تعذر الاتصال بالخادم حالياً: {last_error}")
 else:
     st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
