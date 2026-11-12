@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import re
+import time
 from google import genai
 from google.genai import types
 
@@ -139,20 +140,32 @@ if GEMINI_API_KEY:
 - الصور البيانية (التشبيه، الاستعارة، الكناية).
 - المحسنات البديعية والجماليات الأسلوبية.
 """
-                    response = client.models.generate_content(
-                        model="gemini-3.8-flash",
+                    # قائمة محركات متدرجة للتبديل التلقائي عند وجود ضغط (503)
+                    models_to_try = ["gemini-3.8-flash", "gemini-3.8-flash-lite", "gemini-3.8-pro"]
+                    response = None
+                    last_error = None
 
-                        contents=user_message,
-                        config=types.GenerateContentConfig(
-                            system_instruction=system_instruction,
-                            temperature=0.1,
-                        )
-                    )
-                    
+                    for model_name in models_to_try:
+                        try:
+                            response = client.models.generate_content(
+                                model=model_name,
+                                contents=user_message,
+                                config=types.GenerateContentConfig(
+                                    system_instruction=system_instruction,
+                                    temperature=0.1,
+                                )
+                            )
+                            if response and response.text:
+                                break
+                        except Exception as err:
+                            last_error = err
+                            time.sleep(1)
+                            continue
+
                     st.write("---")
                     st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
                     
-                    if response.text:
+                    if response and response.text:
                         st.markdown(response.text)
                         st.download_button(
                             label="📥 تحميل التقرير النقدي (ملف نصي)",
@@ -161,9 +174,9 @@ if GEMINI_API_KEY:
                             mime="text/plain"
                         )
                     else:
-                        st.warning("⚠️ تعذر استخراج التقرير حالياً، يرجى المحاولة مرة أخرى.")
+                        st.warning("⚠️ الخوادم تشهد ضغطاً لحظياً كبيراً، يرجى الضغط على زر التحليل مرة أخرى بعد ثوانٍ.")
                         
                 except Exception as e:
-                    st.error(f"⚠️ حدث خطأ أثناء المعالجة: {e}")
+                    st.error("⚠️ حدث خطأ أثناء المعالجة، يرجى المحاولة مرة أخرى.")
 else:
     st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
