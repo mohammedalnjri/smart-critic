@@ -41,23 +41,27 @@ def create_arabic_pdf(report_text, poem_text):
     pdf = FPDF()
     pdf.set_margins(10, 10, 10)
     pdf.add_page()
-    bold_font = fm.findfont("DejaVu Sans:weight=bold")
-    pdf.add_font("ArabicBold", "", bold_font)
+    
+    # جلب خط Google العربي الرسمي المشابه لشاشة المحادثة تلقائياً
+    noto_path = "/usr/share/fonts/truetype/noto/NotoSansArabic-Bold.ttf"
+    if not os.path.exists(noto_path):
+        noto_path = fm.findfont("DejaVu Sans:weight=bold")
+    pdf.add_font("GoogleArabic", "", noto_path)
     
     # ترويسة المنصة واسم المبرمج بحجم أكبر ولون مميز
-    pdf.set_font("ArabicBold", size=18)
+    pdf.set_font("GoogleArabic", size=18)
     pdf.set_text_color(20, 80, 160)
     pdf.set_x(10)
     pdf.multi_cell(190, 11, shape_arabic("منصة الناقد الذكي - Smart Critic"), align="C")
     
-    pdf.set_font("ArabicBold", size=13)
+    pdf.set_font("GoogleArabic", size=13)
     pdf.set_text_color(165, 105, 15)
     pdf.set_x(10)
     pdf.multi_cell(190, 9, shape_arabic("تصميم وتطوير المبرمج: محمد النجري | smart-critic.streamlit.app"), align="C")
     pdf.ln(6)
     
-    # نص التقرير بالخط الغامق الواضح
-    pdf.set_font("ArabicBold", size=11)
+    # نص التقرير بالخط الغامق الأنيق
+    pdf.set_font("GoogleArabic", size=12)
     pdf.set_text_color(25, 25, 25)
     raw_all = poem_text + "\n\n" + report_text
     no_tashkeel = re.sub(r'[\u064B-\u065F\u0670*#`]', '', raw_all)
@@ -66,6 +70,7 @@ def create_arabic_pdf(report_text, poem_text):
             pdf.set_x(10)
             pdf.multi_cell(190, 8, shape_arabic(line.strip()), align="R")
     return bytes(pdf.output())
+
 
 
 
