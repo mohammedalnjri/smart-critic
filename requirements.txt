@@ -6,4 +6,6 @@ python-bidi
 duckduckgo-search
 google-genai
 fpdf2
+matplotlib
+
 
