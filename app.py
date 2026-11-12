@@ -245,7 +245,7 @@ if GEMINI_API_KEY:
 
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
                 final_report = ""
-                                valid_models = []
+                valid_models = []
                 for m in client.models.list():
                     name = m.name.replace("models/", "")
                     if "gemini" in name and ("flash" in name or "pro" in name) and not any(x in name for x in ("vision", "embedding", "tts", "image", "audio")):
