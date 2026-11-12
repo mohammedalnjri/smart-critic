@@ -207,7 +207,7 @@ if GEMINI_API_KEY:
                 if not valid_models:
                     valid_models = ["gemini-3.8-flash", "gemini-3-flash-preview"]
 
-                                for model_name in valid_models:
+                for model_name in valid_models:
                     try:
                         response = client.models.generate_content(
                             model=model_name,
