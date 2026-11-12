@@ -106,46 +106,50 @@ if GEMINI_API_KEY or GROQ_API_KEY:
 """
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي..."):
                 final_report = ""
+                errors_log = []
 
-                # المحاولة 1: استخدام Gemini (الأدق علمياً وعروضياً)
+                # المحاولة 1: Gemini بالصيغة القياسية النظيفة
                 if GEMINI_API_KEY:
                     try:
-                        gemini_client = genai.Client(
-                            api_key=GEMINI_API_KEY,
-                            http_options=types.HttpOptions(timeout=12000)
-                        )
+                        gemini_client = genai.Client(api_key=GEMINI_API_KEY)
                         response = gemini_client.models.generate_content(
                             model="gemini-3.8-flash",
                             contents=user_message,
                             config=types.GenerateContentConfig(
                                 system_instruction=system_instruction,
                                 temperature=0.1,
-                                thinking_config=types.ThinkingConfig(thinking_budget=0)
                             )
                         )
                         if response and response.text:
                             final_report = response.text
-                    except Exception:
-                        pass
+                    except Exception as e1:
+                        errors_log.append(f"Gemini: {e1}")
 
-                # المحاولة 2 (الاحتياط الفوري): إذا كانت خوادم Gemini مزدحمة (503) ينتقل فوراً إلى Groq
+                # المحاولة 2: Groq بالنماذج المتاحة في حسابك
                 if not final_report and GROQ_API_KEY:
-                    try:
-                        groq_client = Groq(api_key=GROQ_API_KEY)
-                        chat_completion = groq_client.chat.completions.create(
-                            messages=[
-                                {"role": "system", "content": system_instruction},
-                                {"role": "user", "content": user_message}
-                            ],
-                            model="llama-3.1-8b-instant",
-                            temperature=0.1,
-                            max_tokens=2048
-                        )
-                        first_choice = next(iter(chat_completion.choices))
-                        if first_choice.message.content:
-                            final_report = first_choice.message.content
-                    except Exception:
-                        pass
+                    groq_client = Groq(api_key=GROQ_API_KEY)
+                    for g_model in ["llama-3.1-8b-instant", "openai/gpt-oss-120b"]:
+                        try:
+                            kwargs = {
+                                "messages": [
+                                    {"role": "system", "content": system_instruction},
+                                    {"role": "user", "content": user_message}
+                                ],
+                                "model": g_model,
+                                "temperature": 0.1,
+                                "max_tokens": 2500
+                            }
+                            if "gpt-oss" in g_model:
+                                kwargs["reasoning_effort"] = "low"
+                                
+                            chat_completion = groq_client.chat.completions.create(**kwargs)
+                            first_choice = next(iter(chat_completion.choices))
+                            if first_choice.message.content:
+                                final_report = first_choice.message.content
+                                break
+                        except Exception as e2:
+                            errors_log.append(f"Groq ({g_model}): {e2}")
+                            continue
 
                 st.write("---")
                 st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
@@ -159,6 +163,8 @@ if GEMINI_API_KEY or GROQ_API_KEY:
                         mime="text/plain"
                     )
                 else:
-                    st.error("⚠️ جميع الخوادم تشهد ضغطاً لحظياً في هذه الثانية، يرجى الضغط على الزر مرة أخرى.")
+                    st.error("⚠️ تعذر الحصول على رد. السبب التقني:")
+                    for err in errors_log:
+                        st.code(err)
 else:
     st.info("💡 يرجى التأكد من إضافة مفاتيح API في إعدادات الـ Secrets الخاصة بالتطبيق.")
