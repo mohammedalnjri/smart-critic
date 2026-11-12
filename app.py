@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import time
+import re
 from google import genai
 from google.genai import types
 
@@ -107,17 +108,30 @@ if GEMINI_API_KEY:
 """
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
                 final_report = ""
-                last_error = ""
                 
-                # قائمة نماذج Gemini المتقنة للغة العربية وعلم العروض
-                gemini_models = [
-                    "gemini-3-flash-preview",
-                    "gemini-2.5-flash",
-                    "gemini-2.5-flash-lite"
-                ]
+                # جلب جميع نماذج Gemini المفعلة في حسابك تلقائياً وتصفيتها
+                active_models = []
+                try:
+                    for m in client.models.list():
+                        m_name = m.name.replace("models/", "")
+                        if "gemini" in m_name and ("flash" in m_name or "pro" in m_name):
+                            if "vision" not in m_name and "embedding" not in m_name and "tts" not in m_name:
+                                active_models.append(m_name)
+                except Exception:
+                    pass
 
-                for attempt in range(2):
-                    for model_name in gemini_models:
+                # ترتيب الأولوية للنماذج المتاحة
+                priority = ["gemini-3.8-flash", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-3.8-pro", "gemini-2.5-pro"]
+                ordered_models = [p for p in priority if p in active_models] + [m for m in active_models if m not in priority]
+                
+                if not ordered_models:
+                    ordered_models = priority
+
+                # إعادة المحاولة الصامتة بتأخير تصاعدي حتى ينجح أحد الخوادم
+                for wait_sec in:
+                    if wait_sec > 0:
+                        time.sleep(wait_sec)
+                    for model_name in ordered_models:
                         try:
                             response = client.models.generate_content(
                                 model=model_name,
@@ -130,12 +144,10 @@ if GEMINI_API_KEY:
                             if response and response.text:
                                 final_report = response.text
                                 break
-                        except Exception as err:
-                            last_error = str(err)
+                        except Exception:
                             continue
                     if final_report:
                         break
-                    time.sleep(2)
 
                 st.write("---")
                 st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
@@ -148,7 +160,5 @@ if GEMINI_API_KEY:
                         file_name="تقرير_الناقد_الذكي.txt",
                         mime="text/plain"
                     )
-                else:
-                    st.warning("⚠️ خوادم الذكاء الاصطناعي تشهد ضغطاً لحظياً الآن، يرجى الضغط على زر التحليل مرة أخرى بعد ثوانٍ قليلة.")
 else:
     st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
