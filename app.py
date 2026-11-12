@@ -37,12 +37,16 @@ def shape_arabic(text):
     reshaped = arabic_reshaper.reshape(text)
     return get_display(reshaped)
 
-def create_arabic_pdf(report_text, poem_text):
-    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-    if not os.path.exists(font_path):
-        font_path = "DejaVuSans.ttf"
-        if not os.path.exists(font_path):
-            urllib.request.urlretrieve("https://githubusercontent.com", font_path)
+    def create_arabic_pdf(report_text, poem_text):
+    font_path = ""
+    for root, dirs, files in os.walk("/usr/share/fonts"):
+    for f in files:
+            if f.endswith(".ttf"):
+                font_path = os.path.join(root, f)
+                break
+        if font_path:
+            break
+
 
 
     pdf = FPDF()
@@ -250,8 +254,11 @@ if GEMINI_API_KEY:
                 valid_models = []
                 for m in client.models.list():
                     name = m.name.replace("models/", "")
-                    if "gemini" in name and ("flash" in name or "pro" in name) and not any(x in name for x in ("vision", "embedding", "tts", "image", "audio")):
+                                    for m in client.models.list():
+                    name = m.name.replace("models/", "")
+                    if "gemini" in name and "flash" in name and not any(x in name for x in ("vision", "embedding", "tts", "image", "audio", "1.5", "2.0", "2.5")):
                         valid_models.append(name)
+
 
                 for model_name in valid_models:
                     try:
