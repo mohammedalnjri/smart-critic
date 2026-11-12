@@ -114,7 +114,11 @@ if GROQ_API_KEY:
                     st.write("---")
                     st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
                     
-                    response_text = chat_completion.choices.message.content
+                    
+                    first_choice = next(iter(chat_completion.choices))
+response_text = first_choice.message.content
+
+
                     if response_text:
                         st.markdown(response_text)
                         
