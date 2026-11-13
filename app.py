@@ -135,8 +135,9 @@ def line_to_prosody_symbols(line):
         i += 1
     return symbols
 
-def detect_arabic_meter(raw_text):
-    lines = [l.strip() for l in raw_text.strip().split('\n') if l.strip()]
+ def detect_arabic_meter(raw_text):
+    clean_kashida = raw_text.replace("ـ", "")
+    lines = [l.strip() for l in clean_kashida.strip().split('\n') if l.strip()]
     if not lines:
         return ""
     
@@ -155,25 +156,34 @@ def detect_arabic_meter(raw_text):
             "- الحالة الوزنية: الوزن سليم 100% دون أي كسر، والقافية مقيدة ورويها اللام الساكنة."
         )
 
-    has_diacritics = bool(re.search(r'[\u064B-\u0652]', raw_text))
+    has_diacritics = bool(re.search(r'[\u064B-\u0652]', clean_kashida))
     if has_diacritics:
-        first_line = next(iter(lines))
-        first_symbols = line_to_prosody_symbols(first_line)
-        if first_symbols.startswith("//0/0//0/0"):
-            return f"التقطيع الصوتي الآلي للشطر الأول: ({first_symbols}) -> يطابق **بحر الطويل** (فَعُولُنْ مَفَاعِيلُنْ)."
-        elif first_symbols.startswith("///0//0") or ("///0//0" in first_symbols and first_symbols.startswith("/0/0//0")):
-            return f"التقطيع الصوتي الآلي للشطر الأول: ({first_symbols}) -> يطابق **بحر الكامل** (مُتَفَاعِلُنْ وجوازها المضمر مُتْفَاعِلُنْ)."
-        elif first_symbols.startswith("/0/0//0/0//0"):
-            return f"التقطيع الصوتي الآلي للشطر الأول: ({first_symbols}) -> يطابق **بحر البسيط** (مُسْتَفْعِلُنْ فَاعِلُنْ)."
-        elif first_symbols.startswith("//0///0") or first_symbols.startswith("//0/0/0//0"):
-            return f"التقطيع الصوتي الآلي للشطر الأول: ({first_symbols}) -> يطابق **بحر الوافر** (مُفَاعَلَتُنْ وجوازها المعصوب مُفَاعَلْتُنْ)."
-        elif first_symbols.startswith("/0//0/0/0//0/0"):
-            return f"التقطيع الصوتي الآلي للشطر الأول: ({first_symbols}) -> يطابق **بحر الرمل** (فَاعِلَاتُنْ)."
-        elif first_symbols.startswith("//0/0//0/0//0/0"):
-            return f"التقطيع الصوتي الآلي للشطر الأول: ({first_symbols}) -> يطابق **بحر المتقارب** (فَعُولُنْ)."
+        votes = {"الطويل": 0, "الكامل": 0, "البسيط": 0, "الوافر": 0, "الرمل": 0, "المتقارب": 0}
+        sample_symbols = ""
+        for idx, line in enumerate(lines[:8]):
+            sym = line_to_prosody_symbols(line)
+            if idx == 0:
+                sample_symbols = sym
+            if sym.startswith("//0/0//0/0"):
+                votes["الطويل"] += 1
+            elif sym.startswith("///0//0") or ("///0//0" in sym and sym.startswith("/0/0//0")):
+                votes["الكامل"] += 1
+            elif sym.startswith("/0/0//0/0//0"):
+                votes["البسيط"] += 1
+            elif sym.startswith("//0///0") or sym.startswith("//0/0/0//0"):
+                votes["الوافر"] += 1
+            elif sym.startswith("/0//0/0/0//0/0"):
+                votes["الرمل"] += 1
+            elif sym.startswith("//0/0//0/0//0/0"):
+                votes["المتقارب"] += 1
+
+        best_meter = max(votes, key=votes.get)
+        if votes[best_meter] > 0:
+            return f"البحر الغالب وفق التقطيع الصوتي لأشطر القصيدة هو: **بحر {best_meter}** (عينة الرموز: {sample_symbols}). التزم بتفعيلاته بدقة، وإذا وجد خلل في أحد الأشطر فنبه إليه واقترح تصحيحاً يستقيم به الوزن."
         else:
-            return f"الرموز الصوتية المستخرجة آلياً للشطر الأول: ({first_symbols}) - طابقها بدقة مع أقرب بحر خليلي دون اختلاق تفعيلات متداخلة."
+            return f"الرموز الصوتية المستخرجة: ({sample_symbols}) - طابقها بدقة مع أقرب بحر خليلي."
     return ""
+
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
