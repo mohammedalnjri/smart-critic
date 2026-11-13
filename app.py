@@ -164,18 +164,19 @@ def detect_arabic_meter(raw_text):
             sym = line_to_prosody_symbols(line)
             if idx == 0:
                 sample_symbols = sym
-            if sym.startswith("//0/0//0/0"):
+            if "///0//0" in sym:
+                votes["الكامل"] += 2
+            elif sym.startswith("//0/0//0/0"):
                 votes["الطويل"] += 1
-            elif sym.startswith("///0//0") or ("///0//0" in sym and sym.startswith("/0/0//0")):
-                votes["الكامل"] += 1
             elif sym.startswith("/0/0//0/0//0"):
                 votes["البسيط"] += 1
-            elif sym.startswith("//0///0") or sym.startswith("//0/0/0//0"):
+            elif (sym.startswith("//0///0") or sym.startswith("//0/0/0//0")) and sym.endswith("//0/0"):
                 votes["الوافر"] += 1
             elif sym.startswith("/0//0/0/0//0/0"):
                 votes["الرمل"] += 1
             elif sym.startswith("//0/0//0/0//0/0"):
                 votes["المتقارب"] += 1
+
 
         best_meter = max(votes, key=votes.get)
         if votes[best_meter] > 0:
