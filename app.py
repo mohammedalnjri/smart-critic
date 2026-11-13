@@ -190,7 +190,7 @@ if submitted:
 
 if "scansion_df" in st.session_state:
     st.write("---")
-    st.success(f"⚖️ **النتيجة العروضية:** البحر السائد هو **{st.session_state['dominant_meter']}** (تم تقطيع {len(st.session_state['scansion_df'])} شطر)."
+    st.success(f"⚖️ **النتيجة العروضية:** البحر السائد هو **{st.session_state['dominant_meter']}** (تم تقطيع {len(st.session_state['scansion_df'])} شطر))."
 if "final_report" in st.session_state:
 if "scansion_df" in st.session_state:
     st.write("---")
