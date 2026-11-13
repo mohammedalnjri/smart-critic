@@ -163,37 +163,31 @@ def detect_arabic_meter(raw_text):
             "الرمل": 0, "المتقارب": 0, "الرجز": 0, "الخفيف": 0, "المتدارك": 0
         }
         sample_symbols = ""
-        for idx, line in enumerate(lines[:10]):
+            for idx, line in enumerate(lines[:10]):
             sym = line_to_prosody_symbols(line)
             if idx == 0:
                 sample_symbols = sym
             
-            # 1. الفصل القاطع لمجموعة الوتد المجموع في البداية (//0)
-            if sym.startswith("//0"):
-                if sym.startswith(("//0///0", "//0/0/0")) and sym.endswith(("//0/0", "//0")):
-                    votes["الوافر"] += 3
-                elif sym.startswith(("//0/0//0/0", "//0///0/0", "//0/0//0//0")):
-                    votes["الطويل"] += 3
-                elif sym.startswith("//0/0//0/0//0"):
-                    votes["المتقارب"] += 2
-            
-            # 2. الفصل القاطع للكامل (يبدأ بـ ///0 أو /0/0 ولا يبدأ أبداً بـ //0)
+            if ("//0///0" in sym or sym.startswith("//0/0/0")) and sym.endswith(("//0/0", "//0")):
+                votes["الوافر"] += 4
+            elif sym.startswith(("//0/0//0/0", "//0///0/0", "//0/0//0//0")):
+                votes["الطويل"] += 4
+            elif sym.startswith("//0/0//0/0//0"):
+                votes["المتقارب"] += 3
             elif sym.startswith(("///0//0", "/0/0//0")):
                 if "///0//0" in sym:
-                    votes["الكامل"] += 3
+                    votes["الكامل"] += 4
                 elif sym.startswith(("/0/0//0/0//0", "/0/0//0///0")):
-                    votes["البسيط"] += 3
+                    votes["البسيط"] += 4
                 else:
-                    votes["الرجز"] += 2
-            
-            # 3. الفصل القاطع لمجموعة السبب فالوتد (/0//0)
+                    votes["الرجز"] += 3
             elif sym.startswith(("/0//0", "///0")):
                 if sym.startswith(("/0//0/0", "///0/0")):
                     if "/0/0//0" in sym[6:13]:
-                        votes["الخفيف"] += 3
+                        votes["الخفيف"] += 4
                     else:
-                        votes["الرمل"] += 3
-                else:
+                        votes["الرمل"] += 4
+                elif not sym.endswith("//0/0"):
                     votes["المتدارك"] += 2
 
         best_meter = max(votes, key=votes.get)
