@@ -192,14 +192,13 @@ if submitted:
                 st.session_state["final_report"] = response_text
             else:
                 st.session_state["final_report"] = f"### التقرير العروضي المعتمد\nتم فحص القصيدة رياضياً، وثبت انتماؤها إلى **{dominant_meter}** (عدد الأشطر: **{len(scansion_df)}**)."
-
-           if "scansion_df" in st.session_state:
-               st.write("---")
-               st.success(f"⚖️ **النتيجة العروضية:** البحر السائد هو **{st.session_state['dominant_meter']}** (تم تقطيع {len(st.session_state['scansion_df'])} شطر).")
-               st.markdown(st.session_state["final_report"])
-               st.write("---")
-               st.markdown("### 📊 جدول التقطيع العروضي التفصيلي")
-               st.dataframe(st.session_state["scansion_df"], use_container_width=True, height=350)
+if "scansion_df" in st.session_state:
+      st.write("---")
+      st.success(f"⚖️ **النتيجة العروضية:** البحر السائد هو **{st.session_state['dominant_meter']}** (تم تقطيع {len(st.session_state['scansion_df'])} شطر).")
+      st.markdown(st.session_state["final_report"])
+      st.write("---")
+      st.markdown("### 📊 جدول التقطيع العروضي التفصيلي")
+      st.dataframe(st.session_state["scansion_df"], use_container_width=True, height=350)
     col1, col2 = st.columns(2)
     with col1:
         pdf_bytes = create_arabic_pdf(st.session_state["final_report"], st.session_state["final_poem"])
