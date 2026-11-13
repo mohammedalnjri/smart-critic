@@ -179,8 +179,15 @@ if submitted:
             full_prompt = f"{prosody_report}\n\nالنص الشعري:\n{poem_sample_for_ai}"
             
             client = genai.Client(api_key=GEMINI_API_KEY)
-            response = client.models.generate_content(model="gemini-3.8-flash", contents=full_prompt, config=types.GenerateContentConfig(system_instruction=system_instruction, temperature=0.3))
-            st.session_state["final_report"] = response.text
+            for m in ["gemini-3.8-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"]:
+                try:
+                    response = client.models.generate_content(model=m, contents=full_prompt, config=types.GenerateContentConfig(system_instruction=system_instruction, temperature=0.3))
+                    st.session_state["final_report"] = response.text
+                    break
+                except Exception:
+                    continue
+
+            
 
 if "scansion_df" in st.session_state:
     st.write("---")
