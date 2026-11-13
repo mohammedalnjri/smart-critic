@@ -178,7 +178,7 @@ if submitted:
             system_instruction = "أنت ناقد أدبي وعروضي خبير. اعتمد كلياً على التقرير العروضي المرفق ولا تخالفه. ميز بدقة بين الكامل (مُتَفَاعِلُنْ) والوافر (مُفَاعَلَتُنْ)، وبين السريع/الصخري (مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ فَاعِلُنْ) والرجز. انتبه للقوافي المزدوجة في الشعر الشعبي. نظم الإجابة إلى: أولاً: المعنى العام. ثانياً: التحليل البلاغي. ثالثاً: التحليل العروضي والإيقاعي. رابعاً: ملاحظات وتوجيهات."
             full_prompt = f"{prosody_report}\n\nالنص الشعري:\n{poem_sample_for_ai}"
             response_text = ""
-                if GEMINI_API_KEY:
+            if GEMINI_API_KEY:
                 client_fast = genai.Client(api_key=GEMINI_API_KEY)
                 for m_name in ["gemini-2.5-pro", "gemini-3-flash-preview", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-flash-latest"]:
                     try:
