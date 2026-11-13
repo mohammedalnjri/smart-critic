@@ -158,32 +158,55 @@ def detect_arabic_meter(raw_text):
 
     has_diacritics = bool(re.search(r'[\u064B-\u0652]', clean_kashida))
     if has_diacritics:
-        votes = {"الطويل": 0, "الكامل": 0, "البسيط": 0, "الوافر": 0, "الرمل": 0, "المتقارب": 0}
+        votes = {
+            "الطويل": 0, "الكامل": 0, "البسيط": 0, "الوافر": 0,
+            "الرمل": 0, "المتقارب": 0, "الرجز": 0, "الخفيف": 0, "المتدارك": 0
+        }
         sample_symbols = ""
-        for idx, line in enumerate(lines[:8]):
+        for idx, line in enumerate(lines[:10]):
             sym = line_to_prosody_symbols(line)
             if idx == 0:
                 sample_symbols = sym
-            if "///0//0" in sym:
-                votes["الكامل"] += 2
-            elif sym.startswith("//0/0//0/0"):
-                votes["الطويل"] += 1
-            elif sym.startswith("/0/0//0/0//0"):
-                votes["البسيط"] += 1
-            elif (sym.startswith("//0///0") or sym.startswith("//0/0/0//0")) and sym.endswith("//0/0"):
-                votes["الوافر"] += 1
-            elif sym.startswith("/0//0/0/0//0/0"):
-                votes["الرمل"] += 1
-            elif sym.startswith("//0/0//0/0//0/0"):
-                votes["المتقارب"] += 1
-
+            
+            # 1. الفصل القاطع لمجموعة الوتد المجموع في البداية (//0)
+            if sym.startswith("//0"):
+                if sym.startswith(("//0///0", "//0/0/0")) and sym.endswith(("//0/0", "//0")):
+                    votes["الوافر"] += 3
+                elif sym.startswith(("//0/0//0/0", "//0///0/0", "//0/0//0//0")):
+                    votes["الطويل"] += 3
+                elif sym.startswith("//0/0//0/0//0"):
+                    votes["المتقارب"] += 2
+            
+            # 2. الفصل القاطع للكامل (يبدأ بـ ///0 أو /0/0 ولا يبدأ أبداً بـ //0)
+            elif sym.startswith(("///0//0", "/0/0//0")):
+                if "///0//0" in sym:
+                    votes["الكامل"] += 3
+                elif sym.startswith(("/0/0//0/0//0", "/0/0//0///0")):
+                    votes["البسيط"] += 3
+                else:
+                    votes["الرجز"] += 2
+            
+            # 3. الفصل القاطع لمجموعة السبب فالوتد (/0//0)
+            elif sym.startswith(("/0//0", "///0")):
+                if sym.startswith(("/0//0/0", "///0/0")):
+                    if "/0/0//0" in sym[6:13]:
+                        votes["الخفيف"] += 3
+                    else:
+                        votes["الرمل"] += 3
+                else:
+                    votes["المتدارك"] += 2
 
         best_meter = max(votes, key=votes.get)
         if votes[best_meter] > 0:
-            return f"البحر الغالب وفق التقطيع الصوتي لأشطر القصيدة هو: **بحر {best_meter}** (عينة الرموز: {sample_symbols}). التزم بتفعيلاته بدقة، وإذا وجد خلل في أحد الأشطر فنبه إليه واقترح تصحيحاً يستقيم به الوزن."
+            return (
+                f"البحر الشعري المؤكد وفق البصمة الإيقاعية لأشطر القصيدة هو: **بحر {best_meter}** "
+                f"(عينة التقطيع: {sample_symbols}). التزم بتفعيلاته وجوازاته بدقة تامة، "
+                f"وحافظ على حرف الروي نفسه عند اقتراح أي تصحيح للأبيات."
+            )
         else:
             return f"الرموز الصوتية المستخرجة: ({sample_symbols}) - طابقها بدقة مع أقرب بحر خليلي."
     return ""
+
 
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
