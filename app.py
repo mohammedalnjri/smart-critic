@@ -155,11 +155,6 @@ def analyze_full_poem_prosody(raw_text: str, is_fusha: bool):
     return prosody_summary, df, dominant_meter
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY", "")
-if not GEMINI_API_KEY:
-    st.error("⚠️ مفتاح GEMINI_API_KEY غير موجود في Secrets.")
-    st.stop()
-
-client = genai.Client(api_key=GEMINI_API_KEY)
 
 st.write("---")
 with st.form("critic_form"):
@@ -170,7 +165,7 @@ with st.form("critic_form"):
 
 if submitted:
     if not user_prompt.strip():
-        st.error("الرجاء كتابة النص الشعري أولاً!")
+        st.warning("الرجاء كتابة النص الشعري أولاً!")
     else:
         is_fusha = (poem_style == "شعر فصيح (عمودي)")
         prosody_report, scansion_df, dominant_meter = analyze_full_poem_prosody(user_prompt, is_fusha)
@@ -182,21 +177,13 @@ if submitted:
             poem_sample_for_ai = "\n".join(user_prompt.strip().split('\n')[:60])
             system_instruction = "أنت ناقد أدبي وعروضي خبير. اعتمد كلياً على التقرير العروضي المرفق ولا تخالفه. ميز بدقة بين الكامل (مُتَفَاعِلُنْ) والوافر (مُفَاعَلَتُنْ)، وبين السريع/الصخري (مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ فَاعِلُنْ) والرجز. انتبه للقوافي المزدوجة في الشعر الشعبي. نظم الإجابة إلى: أولاً: المعنى العام. ثانياً: التحليل البلاغي. ثالثاً: التحليل العروضي والإيقاعي. رابعاً: ملاحظات وتوجيهات."
             full_prompt = f"{prosody_report}\n\nالنص الشعري:\n{poem_sample_for_ai}"
-            try:
-                client_fast = genai.Client(api_key=GEMINI_API_KEY)
-                response_text = ""
-                for m_name in ["gemini-2.5-pro", "gemini-3-flash-preview", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-flash-latest"]:
-                    try:
-                        res = client_fast.models.generate_content(model=m_name, contents=full_prompt, config=types.GenerateContentConfig(system_instruction=system_instruction, temperature=0.2))
-                        if res and getattr(res, "text", None):
-                            response_text = res.text
-                            break
-                    except Exception:
-                        continue
-                
-                if response_text:
-                    st.session_state["final_report"] = response_text
-                else:
-                    st.session_state["final_report"] = f"### أولاً: التقرير العروضي والإيقاعي المعتمد\nتم فحص القصيدة عبر المحرك العروضي الرياضي لمنصة الناقد الذكي، وثبت انتماؤها إلى **{dominant_meter}**.\n\n### ثانياً: البنية الموسيقية للأبيات\n- يعتمد هذا الوزن على التناغم الصوتي الدقيق بين الحركات والسكنات كما هو موضح في جدول التقطيع التفصيلي أدناه.\n- عدد الأشطر التي تم تحليلها وضبطها: **{len(scansion_df)} شطر**."
-            except Exception:
-                st.session_state["final_report"] = f"### التقرير العروضي الموثق\nينتمي النص الشعري إلى **{dominant_meter}** وفق البصمة الإيقاعية المستخرجة آلياً لعدد **{len(scansion_df)} شطر**."
+            response_text = ""
+            if GEMINI_API_KEY:
+                try:
+                    client_fast = genai.Client(api_key=GEMINI_API_KEY)
+                    for m_name in ["gemini-2.5-pro", "gemini-3-flash-preview", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-flash-latest"]:
+                        try:
+                            res = client_fast.models.generate_content(model=m_name, contents=full_prompt, config=types.GenerateContentConfig(system_instruction=system_instruction, temperature=0.2))
+                            if res and getattr(res, "text", None):
+                                response_text = res.text
+                                break
