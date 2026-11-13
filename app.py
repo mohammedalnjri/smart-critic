@@ -7,21 +7,13 @@ from google.genai import types
 from fpdf import FPDF
 import arabic_reshaper
 from bidi.algorithm import get_display
-import mishkal.tashkeel
-import pyarabic.araby as araby
 
 st.set_page_config(page_title="Smart Critic - الناقد الذكي", page_icon="📚", layout="centered")
-st.markdown("""<style>.stMarkdown, .stTextArea, .stAlert, .stDataFrame { direction: rtl; text-align: right; } [data-testid="collapsedControl"] { display: none; }</style>""", unsafe_allow_html=True)
+st.markdown("""<style>.stMarkdown, .stTextArea, .stAlert, .stDataFrame { direction: rtl; text-align: right; }</style>""", unsafe_allow_html=True)
 
 st.title("🤖 منصة الناقد الذكي - Smart Critic")
 st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; margin-top: -15px;'>🎨 تصميم المبرمج محمد النجري</p>", unsafe_allow_html=True)
 st.subheader("التحليل الأدبي والعروضي الصارم بأحدث التقنيات البرمجية")
-
-@st.cache_resource
-def load_vocalizer():
-    return mishkal.tashkeel.TashkeelClass()
-
-vocalizer = load_vocalizer()
 
 def shape_arabic(text):
     return get_display(arabic_reshaper.reshape(text))
@@ -54,15 +46,6 @@ def create_arabic_pdf(report_text, poem_text):
             pdf.set_x(12)
             pdf.multi_cell(186, 8.5, shape_arabic(stripped), align="R")
     return bytes(pdf.output())
-
-def auto_diacritize_if_needed(text: str, is_fusha: bool) -> str:
-    if not is_fusha:
-        return text
-    letters_count = len(araby.strip_tashkeel(text))
-    tashkeel_count = len(text) - letters_count
-    if letters_count > 0 and (tashkeel_count / letters_count) < 0.25:
-        return vocalizer.tashkeel(text)
-    return text
 
 def line_to_prosody_symbols(line: str, is_fusha: bool = True) -> str:
     text = line.strip().replace("ـ", "").replace('آ', 'أَا')
@@ -141,7 +124,7 @@ def classify_symbols(sym: str) -> tuple:
         return ("الطويل", "فَعُولُنْ مَفَاعِيلُنْ فَعُولُنْ مَفَاعِلُنْ")
     if sym.startswith(("/0/0//0/0//0", "/0/0//0///0")):
         return ("البسيط التام", "مُسْتَفْعِلُنْ فَاعِلُنْ مُسْتَفْعِلُنْ فَعِلُنْ")
-    return ("بحر مركب / يحتاج مراجعة التشكيل", "يُرجى ضبط الحركات")
+    return ("يُستنتج من البصمة الصوتية", "تفعيلات قياسية")
 
 def analyze_full_poem_prosody(raw_text: str, is_fusha: bool):
     clean_kashida = raw_text.replace("ـ", "")
@@ -159,47 +142,53 @@ def analyze_full_poem_prosody(raw_text: str, is_fusha: bool):
     rows = []
     votes = {}
     for idx, shatr in enumerate(ashatar):
-        vocalized_shatr = auto_diacritize_if_needed(shatr, is_fusha)
-        sym = line_to_prosody_symbols(vocalized_shatr, is_fusha=is_fusha)
+        sym = line_to_prosody_symbols(shatr, is_fusha=is_fusha)
         meter_name, tafeelat = classify_symbols(sym)
-        if "يحتاج مراجعة" not in meter_name:
+        if "يُستنتج" not in meter_name:
             votes[meter_name] = votes.get(meter_name, 0) + 1
-        rows.append({"م": idx + 1, "الشطر": shatr, "التشكيل المعتمد": vocalized_shatr if is_fusha else "نطق شعبي مسكّن", "الرموز العروضية": sym, "البحر": meter_name, "التفعيلات": tafeelat})
+        rows.append({"م": idx + 1, "الشطر": shatr, "الرموز العروضية": sym, "البحر": meter_name, "التفعيلات": tafeelat})
     df = pd.DataFrame(rows)
-    dominant_meter = max(votes, key=votes.get) if votes else "يحتاج مراجعة التشكيل"
+    dominant_meter = max(votes, key=votes.get) if votes else "يُحدد بالتحليل الصوتي المرفق"
     dominant_tafeelat = next((taf for name, taf, _ in METERS_SIGNATURES if name == dominant_meter), "")
     sample_syms = "\n".join([f"- الشطر ({r['م']}): {r['الشطر']} -> الرموز: {r['الرموز العروضية']} ({r['البحر']})" for r in rows[:6]])
-    prosody_summary = f"البحر الشعري المؤكد رياضياً (من {len(rows)} شطر): **بحر {dominant_meter}**\n- التفعيلات: **{dominant_tafeelat}**\n- عينة التقطيع:\n{sample_syms}\nالتزم بهذا البحر وتفعيلاته بدقة 100%."
+    prosody_summary = f"البحر الشعري المؤكد رياضياً (من {len(rows)} شطر): **بحر {dominant_meter}**\n- التفعيلات: **{dominant_tafeelat}**\n- عينة التقطيع:\n{sample_syms}"
     return prosody_summary, df, dominant_meter
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY", "")
 if not GEMINI_API_KEY:
-    st.error("⚠️ مفتاح GEMINI_API_KEY غير موجود في إعدادات البيئة (Secrets).")
+    st.error("⚠️ مفتاح GEMINI_API_KEY غير موجود في Secrets.")
     st.stop()
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 st.write("---")
-st.markdown("### 📚 1. المراجع والنصوص المراد تحليلها (اختياري)")
-uploaded_file = st.file_uploader("ارفع الملف أو المرجع العربي (TXT أو PDF):", type=["txt", "pdf"])
-context_content = uploaded_file.read().decode("utf-8", errors="ignore") if uploaded_file else ""
-if uploaded_file:
-    st.success("تم تحميل المرجع بنجاح!")
+with st.form("critic_form"):
+    st.markdown("### ✍️ أدخل القصيدة للتحليل والتقطيع")
+    poem_style = st.radio("نمط القصيدة:", ["شعر فصيح (عمودي)", "شعر شعبي / نبطي / يمني"], horizontal=True)
+    user_prompt = st.text_area("اكتب الأبيات هنا (يدعم حتى 1000+ بيت):", height=180, value="عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي العَزائِمُ\nوَتَأتِي عَلَى قَدْرِ الكِرامِ المَكارِمُ")
+    submitted = st.form_submit_button("🚀 ابدأ النقد الأدبي والعروضي الموثق", type="primary", use_container_width=True)
 
-st.write("---")
-st.markdown("### ✍️ 2. توجيهات الناقد الذكي")
-poem_style = st.radio("اختر نمط القصيدة لضبط خوارزمية التقطيع:", ["شعر فصيح (عمودي)", "شعر شعبي / نبطي / يمني"], horizontal=True)
-user_prompt = st.text_area("💡 أدخل البيت الشعري في سطرين متتاليين (الصدر ثم العجز)، أو الصق قصيدتك كاملة (يدعم حتى 1000+ بيت):", height=200, value="عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي العَزائِمُ\nوَتَأتِي عَلَى قَدْرِ الكِرامِ المَكارِمُ")
-
-if st.button("🚀 ابدأ النقد الأدبي والعروضي الموثق", use_container_width=True):
+if submitted:
     if not user_prompt.strip():
         st.error("الرجاء كتابة النص الشعري أولاً!")
-        st.stop()
-    is_fusha = (poem_style == "شعر فصيح (عمودي)")
-    with st.spinner("جاري التقطيع العروضي الرياضي لجميع الأبيات..."):
+    else:
+        is_fusha = (poem_style == "شعر فصيح (عمودي)")
         prosody_report, scansion_df, dominant_meter = analyze_full_poem_prosody(user_prompt, is_fusha)
         st.session_state["scansion_df"] = scansion_df
         st.session_state["dominant_meter"] = dominant_meter
         st.session_state["final_poem"] = user_prompt
-    with st.spinner("جاري إعداد الدراسة النقدية والبلاغية..."):
-        poem_sample_for_ai = "\n".join(user_prompt.strip().split('\n')[:60])
+        
+        with st.spinner("جاري صياغة التقرير النقدي..."):
+            poem_sample_for_ai = "\n".join(user_prompt.strip().split('\n')[:60])
+            system_instruction = "أنت ناقد أدبي وعروضي خبير. اعتمد كلياً على التقرير العروضي المرفق ولا تخالفه. ميز بدقة بين الكامل (مُتَفَاعِلُنْ) والوافر (مُفَاعَلَتُنْ)، وبين السريع/الصخري (مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ فَاعِلُنْ) والرجز. انتبه للقوافي المزدوجة في الشعر الشعبي. نظم الإجابة إلى: أولاً: المعنى العام. ثانياً: التحليل البلاغي. ثالثاً: التحليل العروضي والإيقاعي. رابعاً: ملاحظات وتوجيهات."
+            full_prompt = f"{prosody_report}\n\nالنص الشعري:\n{poem_sample_for_ai}"
+            try:
+                response = client.models.generate_content(model="gemini-2.5-flash", contents=full_prompt, config=types.GenerateContentConfig(system_instruction=system_instruction, temperature=0.2))
+                st.session_state["final_report"] = response.text
+            except Exception as e:
+                st.error(f"خطأ في الاتصال بالنموذج: {e}")
+
+if "scansion_df" in st.session_state:
+    st.write("---")
+    st.success(f"⚖️ **النتيجة العروضية:** البحر السائد هو **{st.session_state['dominant_meter']}** (تم تقطيع {len(st.session_state['scansion_df'])} شطر).")
+    if "final_report" in st.session_state:
