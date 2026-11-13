@@ -167,18 +167,18 @@ def analyze_full_poem_prosody(raw_text: str, is_fusha: bool):
     if not raw_lines:
         return "", pd.DataFrame(), "غير محدد"
 
-    ashطر = []
+    ashatar = []
     for line in raw_lines:
         if '=' in line:
-            ashطر.extend([p.strip() for p in line.split('=') if p.strip()])
+            ashatar.extend([p.strip() for p in line.split('=') if p.strip()])
         elif '***' in line:
-            ashطر.extend([p.strip() for p in line.split('***') if p.strip()])
+            ashatar.extend([p.strip() for p in line.split('***') if p.strip()])
         else:
-            ashطر.append(line)
+            ashatar.append(line)
 
     rows = []
     votes = {}
-    for idx, shatr in enumerate(ashطر):
+    for idx, shatr in enumerate(ashatar):
         vocalized_shatr = auto_diacritize_if_needed(shatr, is_fusha)
         sym = line_to_prosody_symbols(vocalized_shatr, is_fusha=is_fusha)
         meter_name, tafeelat = classify_symbols(sym)
@@ -230,4 +230,3 @@ if GEMINI_API_KEY:
         if not user_prompt.strip():
             st.error("الرجاء كتابة النص الشعري أولاً!")
         else:
-            is_fusha = (poem_style == "شعر فصيح (عمودي)")
