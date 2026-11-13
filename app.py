@@ -10,23 +10,9 @@ from bidi.algorithm import get_display
 import mishkal.tashkeel
 import pyarabic.araby as araby
 
-st.set_page_config(
-    page_title="Smart Critic - الناقد الذكي",
-    page_icon="📚",
-    layout="centered"
-)
+st.set_page_config(page_title="Smart Critic - الناقد الذكي", page_icon="📚", layout="centered")
 
-st.markdown("""
-<style>
-    .stMarkdown, .stTextArea, .stAlert, .stDataFrame {
-        direction: rtl;
-        text-align: right;
-    }
-    [data-testid="collapsedControl"] {
-        display: none;
-    }
-</style>
-""", unsafe_allow_html=True)
+st.markdown("""<style>.stMarkdown, .stTextArea, .stAlert, .stDataFrame { direction: rtl; text-align: right; } [data-testid="collapsedControl"] { display: none; }</style>""", unsafe_allow_html=True)
 
 st.title("🤖 منصة الناقد الذكي - Smart Critic")
 st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; margin-top: -15px;'>🎨 تصميم المبرمج محمد النجري</p>", unsafe_allow_html=True)
@@ -38,9 +24,6 @@ def load_vocalizer():
 
 vocalizer = load_vocalizer()
 
-# ==========================================
-# دالة إنشاء ملف PDF عربي منسق
-# ========================================== 
 def shape_arabic(text):
     return get_display(arabic_reshaper.reshape(text))
 
@@ -77,9 +60,6 @@ def create_arabic_pdf(report_text, poem_text):
             pdf.multi_cell(186, 8.5, shape_arabic(stripped), align="R")
     return bytes(pdf.output())
 
-# ==========================================
-# محرك التشكيل والتقطيع العروضي الرياضي
-# ==========================================
 def auto_diacritize_if_needed(text: str, is_fusha: bool) -> str:
     if not is_fusha:
         return text
@@ -92,7 +72,6 @@ def auto_diacritize_if_needed(text: str, is_fusha: bool) -> str:
 def line_to_prosody_symbols(line: str, is_fusha: bool = True) -> str:
     text = line.strip().replace("ـ", "")
     text = text.replace('آ', 'أَا')
-    
     chars = list(text)
     expanded = []
     for ch in chars:
@@ -203,22 +182,12 @@ def analyze_full_poem_prosody(raw_text: str, is_fusha: bool):
         vocalized_shatr = auto_diacritize_if_needed(shatr, is_fusha)
         sym = line_to_prosody_symbols(vocalized_shatr, is_fusha=is_fusha)
         meter_name, tafeelat = classify_symbols(sym)
-        
         if "يحتاج مراجعة" not in meter_name:
             votes[meter_name] = votes.get(meter_name, 0) + 1
-            
-        rows.append({
-            "م": idx + 1,
-            "الشطر": shatr,
-            "التشكيل المعتمد": vocalized_shatr if is_fusha else "نطق شعبي مسكّن",
-            "الرموز العروضية": sym,
-            "البحر": meter_name,
-            "التفعيلات": tafeelat
-        })
+        rows.append({"م": idx + 1, "الشطر": shatr, "التشكيل المعتمد": vocalized_shatr if is_fusha else "نطق شعبي مسكّن", "الرموز العروضية": sym, "البحر": meter_name, "التفعيلات": tafeelat})
 
     df = pd.DataFrame(rows)
     dominant_meter = max(votes, key=votes.get) if votes else "يحتاج مراجعة التشكيل"
-    
     dominant_tafeelat = ""
     for name, taf, _ in METERS_SIGNATURES:
         if name == dominant_meter:
@@ -226,18 +195,13 @@ def analyze_full_poem_prosody(raw_text: str, is_fusha: bool):
             break
 
     sample_syms = "\n".join([f"- الشطر ({r['م']}): {r['الشطر']} -> الرموز: {r['الرموز العروضية']} ({r['البحر']})" for r in rows[:6]])
-    
     prosody_summary = f"""البحر الشعري المؤكد رياضياً للقصيدة (من واقع تحليل {len(rows)} شطر): **بحر {dominant_meter}**
 - التفعيلات القياسية: **{dominant_tafeelat}**
 - عينة من التقطيع الصوتي الفعلي للأشطر الأولى:
 {sample_syms}
 تنبيه صارم للنموذج: التزم بهذا البحر وتفعيلاته بدقة 100% ولا تغيره أبداً."""
-
     return prosody_summary, df, dominant_meter
 
-# ==========================================
-# واجهة التطبيق الرئيسية والربط مع Gemini
-# ==========================================
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 if GEMINI_API_KEY:
@@ -258,5 +222,12 @@ if GEMINI_API_KEY:
     st.write("---")
     st.markdown("### ✍️ 2. توجيهات الناقد الذكي")
     
-    poem_style = st.radio(
-        "اختر نمط القصيدة لضبط خوارزمية التقطيع:",
+    poem_style = st.radio("اختر نمط القصيدة لضبط خوارزمية التقطيع:", ["شعر فصيح (عمودي)", "شعر شعبي / نبطي / يمني"], horizontal=True)
+    
+    user_prompt = st.text_area("💡 أدخل البيت الشعري في سطرين متتاليين (الصدر ثم العجز)، أو الصق قصيدتك كاملة (يدعم حتى 1000+ بيت):", height=200, value="عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي العَزائِمُ\nوَتَأتِي عَلَى قَدْرِ الكِرامِ المَكارِمُ")
+
+    if st.button("🚀 ابدأ النقد الأدبي والعروضي الموثق", use_container_width=True):
+        if not user_prompt.strip():
+            st.error("الرجاء كتابة النص الشعري أولاً!")
+        else:
+            is_fusha = (poem_style == "شعر فصيح (عمودي)")
