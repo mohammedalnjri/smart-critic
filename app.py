@@ -134,8 +134,8 @@ def line_to_prosody_symbols(line):
                     symbols += '/'
         i += 1
     return symbols
-
- def detect_arabic_meter(raw_text):
+    
+def detect_arabic_meter(raw_text):
     clean_kashida = raw_text.replace("ـ", "")
     lines = [l.strip() for l in clean_kashida.strip().split('\n') if l.strip()]
     if not lines:
