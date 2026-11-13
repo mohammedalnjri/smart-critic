@@ -183,16 +183,9 @@ if submitted:
             system_instruction = "أنت ناقد أدبي وعروضي خبير. اعتمد كلياً على التقرير العروضي المرفق ولا تخالفه. ميز بدقة بين الكامل (مُتَفَاعِلُنْ) والوافر (مُفَاعَلَتُنْ)، وبين السريع/الصخري (مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ فَاعِلُنْ) والرجز. انتبه للقوافي المزدوجة في الشعر الشعبي. نظم الإجابة إلى: أولاً: المعنى العام. ثانياً: التحليل البلاغي. ثالثاً: التحليل العروضي والإيقاعي. رابعاً: ملاحظات وتوجيهات."
             full_prompt = f"{prosody_report}\n\nالنص الشعري:\n{poem_sample_for_ai}"
             try:
-                                client_fast = genai.Client(api_key=GEMINI_API_KEY, http_options={'timeout': 25.0})
-                response = client_fast.models.generate_content(
-                    model="gemini-3.8-flash",
-                    contents=full_prompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction=system_instruction,
-                        temperature=0.2,
-                        thinking_config=types.ThinkingConfig(thinking_budget=0)
-                    )
-                )
+                client_fast = genai.Client(api_key=GEMINI_API_KEY, http_options={'timeout': 25.0})
+                response = client_fast.models.generate_content(model="gemini-3.8-flash", contents=full_prompt, config=types.GenerateContentConfig(system_instruction=system_instruction, temperature=0.2, thinking_config=types.ThinkingConfig(thinking_budget=0)))
+
 
                 st.session_state["final_report"] = response.text
             except Exception as e:
