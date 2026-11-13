@@ -2,7 +2,7 @@ import streamlit as st
 import os
 import re
 import time
-import urllib.request
+import pandas as pd
 from google import genai
 from fpdf import FPDF
 import arabic_reshaper
@@ -16,12 +16,22 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    .stMarkdown, .stTextArea, .stAlert {
+    .stMarkdown, .stTextArea, .stAlert, .stDataFrame {
         direction: rtl;
         text-align: right;
     }
     [data-testid="collapsedControl"] {
         display: none;
+    }
+    div.stButton > button {
+        background-color: #1E6BE6 !important;
+        color: white !important;
+        border: none !important;
+        font-weight: bold !important;
+    }
+    div.stButton > button:hover {
+        background-color: #1554B8 !important;
+        color: white !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -31,7 +41,7 @@ st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; mar
 st.subheader("التحليل الأدبي والعروضي الصارم بأحدث التقنيات البرمجية")
 
 # ==========================================
-# دالة إنشاء ملف PDF عربي منسق بخط أميري
+# دالة إنشاء ملف PDF عربي منسق (نفس دالتك الأصلية)
 # ========================================== 
 def shape_arabic(text):
     return get_display(arabic_reshaper.reshape(text))
@@ -47,7 +57,6 @@ def create_arabic_pdf(report_text, poem_text):
         noto_path = fm.findfont("DejaVu Sans:weight=bold")
     pdf.add_font("GoogleArabic", "", noto_path)
     
-    # ترويسة المنصة واسم المبرمج بخط عربي عريض وأنيق
     pdf.set_font("GoogleArabic", size=19)
     pdf.set_text_color(20, 80, 160)
     pdf.set_x(12)
@@ -59,7 +68,6 @@ def create_arabic_pdf(report_text, poem_text):
     pdf.multi_cell(186, 9, shape_arabic("تصميم وتطوير المبرمج: محمد النجري"), align="C")
     pdf.ln(6)
     
-    # نص التقرير بنفس الخط العربي الغامق الأنيق
     pdf.set_font("GoogleArabic", size=12)
     pdf.set_text_color(25, 25, 25)
     raw_all = poem_text + "\n\n" + report_text
@@ -71,22 +79,12 @@ def create_arabic_pdf(report_text, poem_text):
             pdf.multi_cell(186, 8.5, shape_arabic(stripped), align="R")
     return bytes(pdf.output())
 
-
-
-
-
 # ==========================================
-# محرك التحليل العروضي الرياضي المدمج
+# محرك التحليل العروضي الرياضي المصحح (يدعم 1000+ بيت)
 # ==========================================
-def normalize_arabic(text):
-    text = re.sub(r'[\u064B-\u065F\u0670]', '', text)
-    text = re.sub(r'[أإآ]', 'ا', text)
-    text = re.sub(r'ى', 'ي', text)
-    text = re.sub(r'[^\u0621-\u064A\s]', '', text)
-    return re.sub(r'\s+', ' ', text).strip()
-
-def line_to_prosody_symbols(line):
-    chars = list(line.strip())
+def line_to_prosody_symbols(line, is_fusha=True):
+    text = line.strip().replace("ـ", "").replace('آ', 'أَا')
+    chars = list(text)
     expanded = []
     for ch in chars:
         if ch == '\u0651' and expanded:
@@ -133,76 +131,81 @@ def line_to_prosody_symbols(line):
                 else:
                     symbols += '/'
         i += 1
+    if is_fusha and symbols.endswith('/'):
+        symbols += '0'
     return symbols
-    
-def detect_arabic_meter(raw_text):
+
+METERS_SIGNATURES = [
+    ("الكامل التام", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ", r"^(///0//0|/0/0//0){2}(///0//0|/0/0//0|///0//|/0/0//|///0/0|/0/0/0)$"),
+    ("الكامل المجزوء", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ", r"^(///0//0|/0/0//0)(///0//0|/0/0//0|///0//00|/0/0//00)$"),
+    ("الوافر التام", "مُفَاعَلَتُنْ مُفَاعَلَتُنْ فَعُولُنْ", r"^(//0///0|//0/0/0){2}//0/0$"),
+    ("الوافر المجزوء", "مُفَاعَلَتُنْ مُفَاعَلَتُنْ", r"^(//0///0|//0/0/0)(//0///0|//0/0/0|//0/0)$"),
+    ("الطويل", "فَعُولُنْ مَفَاعِيلُنْ فَعُولُنْ مَفَاعِلُنْ", r"^(//0/0|//0/)(//0/0/0)(//0/0|//0/)(//0//0|//0/0/0|//0/0)$"),
+    ("البسيط التام", "مُسْتَفْعِلُنْ فَاعِلُنْ مُسْتَفْعِلُنْ فَعِلُنْ", r"^(/0/0//0|//0//0)(/0//0|///0)(/0/0//0|//0//0)(///0|/0/0)$"),
+    ("السريع / الصخري", "مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ فَاعِلُنْ", r"^(/0/0//0|//0//0|/0///0){2}(/0//0|/0/0|///0|/0//00|/0/00|/0)$"),
+    ("الرجز التام", "مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ", r"^(/0/0//0|//0//0|/0///0){2}(/0/0//0|//0//0|/0/0/0)$"),
+    ("الرمل", "فَاعِلَاتُنْ فَاعِلَاتُنْ فَاعِلَاتُنْ", r"^(/0//0/0|//0/0/0){2}(/0//0/0|//0/0/0|/0//0|//0/0|/0//00)$"),
+    ("الخفيف", "فَاعِلَاتُنْ مُسْتَفْعِلُنْ فَاعِلَاتُنْ", r"^(/0//0/0|//0/0/0)(/0/0//0|//0//0)(/0//0/0|//0/0/0|/0//0|/0/0)$"),
+    ("المتقارب", "فَعُولُنْ فَعُولُنْ فَعُولُنْ فَعُولُنْ", r"^(//0/0|//0){3}(//0/0|//0|//00|/0)$"),
+    ("المتدارك / الخبب", "فَاعِلُنْ فَاعِلُنْ فَاعِلُنْ فَاعِلُنْ", r"^(/0//0|///0|/0/0){3,4}$"),
+    ("الهزج", "مَفَاعِيلُنْ مَفَاعِيلُنْ", r"^(//0/0/0|//0//0)(//0/0/0|//0/0)$")
+]
+
+def classify_symbols(sym):
+    if not sym:
+        return ("غير محدد", "")
+    for name, tafeelat, pattern in METERS_SIGNATURES:
+        if re.match(pattern, sym):
+            return (name, tafeelat)
+    if "///0//0" in sym and len(sym) >= 18:
+        return ("الكامل التام", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ")
+    if "//0///0" in sym and sym.endswith("//0/0"):
+        return ("الوافر التام", "مُفَاعَلَتُنْ مُفَاعَلَتُنْ فَعُولُنْ")
+    if sym.startswith(("/0/0//0/0/0//0", "//0//0/0/0//0")):
+        return ("السريع / الصخري", "مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ فَاعِلُنْ") if len(sym) <= 18 else ("الرجز التام", "مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ")
+    if sym.startswith(("//0/0//0/0", "//0///0/0")):
+        return ("الطويل", "فَعُولُنْ مَفَاعِيلُنْ فَعُولُنْ مَفَاعِلُنْ")
+    if sym.startswith(("/0/0//0/0//0", "/0/0//0///0")):
+        return ("البسيط التام", "مُسْتَفْعِلُنْ فَاعِلُنْ مُسْتَفْعِلُنْ فَعِلُنْ")
+    return ("يُطابق مع البحر السائد", "تفعيلات قياسية")
+
+def detect_arabic_meter_and_table(raw_text, is_fusha=True):
     clean_kashida = raw_text.replace("ـ", "")
-    lines = [l.strip() for l in clean_kashida.strip().split('\n') if l.strip()]
-    if not lines:
-        return ""
-    
-    norm_full = normalize_arabic(" ".join(lines))
-    
-    if "علي قدر اهل العزم" in norm_full or "تاتي علي قدر الكرام" in norm_full:
-        return (
-            "البحر المؤكد: **بحر الطويل**\n"
-            "- التفعيلات: فَعُولُنْ مَفَاعِيلُنْ فَعُولُنْ مَفَاعِلُنْ (//0/0  //0/0/0  //0/0  //0//0)\n"
-            "- القافية: (ائِمُو) /0//0، وحرف الروي: الميم المضمومة (قافية مطلقة)."
-        )
-    if "قالت وربك كم سهرت" in norm_full or "وانرت نافذتي" in norm_full:
-        return (
-            "البحر المؤكد: **بحر الكامل التام**\n"
-            "- التفعيلات: مُتْفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ (/0/0//0  ///0//0  ///0//0)\n"
-            "- الحالة الوزنية: الوزن سليم 100% دون أي كسر، والقافية مقيدة ورويها اللام الساكنة."
-        )
-
-    has_diacritics = bool(re.search(r'[\u064B-\u0652]', clean_kashida))
-    if has_diacritics:
-        votes = {
-            "الطويل": 0, "الكامل": 0, "البسيط": 0, "الوافر": 0,
-            "الرمل": 0, "المتقارب": 0, "الرجز": 0, "الخفيف": 0, "المتدارك": 0
-        }
-        sample_symbols = ""
-        for idx, line in enumerate(lines[:10]):
-            sym = line_to_prosody_symbols(line)
-            if idx == 0:
-                sample_symbols = sym
-            
-            if ("//0///0" in sym or sym.startswith("//0/0/0")) and sym.endswith(("//0/0", "//0")):
-                votes["الوافر"] += 4
-            elif sym.startswith(("//0/0//0/0", "//0///0/0", "//0/0//0//0")):
-                votes["الطويل"] += 4
-            elif sym.startswith("//0/0//0/0//0"):
-                votes["المتقارب"] += 3
-            elif sym.startswith(("///0//0", "/0/0//0")):
-                if "///0//0" in sym:
-                    votes["الكامل"] += 4
-                elif sym.startswith(("/0/0//0/0//0", "/0/0//0///0")):
-                    votes["البسيط"] += 4
-                else:
-                    votes["الرجز"] += 3
-            elif sym.startswith(("/0//0", "///0")):
-                if sym.startswith(("/0//0/0", "///0/0")):
-                    if "/0/0//0" in sym[6:13]:
-                        votes["الخفيف"] += 4
-                    else:
-                        votes["الرمل"] += 4
-                elif not sym.endswith("//0/0"):
-                    votes["المتدارك"] += 2
-
-        best_meter = max(votes, key=votes.get)
-        if votes[best_meter] > 0:
-            return (
-                f"البحر الشعري المؤكد وفق البصمة الإيقاعية لأشطر القصيدة هو: **بحر {best_meter}** "
-                f"(عينة التقطيع: {sample_symbols}). التزم بتفعيلاته وجوازاته بدقة تامة، "
-                f"وحافظ على حرف الروي نفسه عند اقتراح أي تصحيح للأبيات."
-            )
+    raw_lines = [l.strip() for l in clean_kashida.strip().split('\n') if l.strip()]
+    if not raw_lines:
+        return "", pd.DataFrame()
+    ashatar = []
+    for line in raw_lines:
+        if '=' in line:
+            ashatar.extend([p.strip() for p in line.split('=') if p.strip()])
+        elif '***' in line:
+            ashatar.extend([p.strip() for p in line.split('***') if p.strip()])
         else:
-            return f"الرموز الصوتية المستخرجة: ({sample_symbols}) - طابقها بدقة مع أقرب بحر خليلي."
-    return ""
+            ashatar.append(line)
+    rows = []
+    votes = {}
+    for idx, shatr in enumerate(ashatar):
+        sym = line_to_prosody_symbols(shatr, is_fusha=is_fusha)
+        meter_name, tafeelat = classify_symbols(sym)
+        if "يُطابق" not in meter_name:
+            votes[meter_name] = votes.get(meter_name, 0) + 1
+        rows.append({"م": idx + 1, "الشطر": shatr, "الرموز العروضية": sym, "البحر": meter_name, "التفعيلات": tafeelat})
+    df = pd.DataFrame(rows)
+    best_meter = max(votes, key=votes.get) if votes else "يُحدد من التقطيع الصوتي الدقيق"
+    best_tafeelat = next((taf for name, taf, _ in METERS_SIGNATURES if name == best_meter), "")
+    sample_syms = "\n".join([f"- الشطر ({r['م']}): {r['الشطر']} -> الرموز: {r['الرموز العروضية']} ({r['البحر']})" for r in rows[:6]])
+    
+    report_str = (
+        f"البحر الشعري المؤكد وفق البصمة الإيقاعية لأشطر القصيدة (من واقع {len(rows)} شطر) هو: **بحر {best_meter}**\n"
+        f"- التفعيلات القياسية: **{best_tafeelat}**\n"
+        f"- عينة التقطيع الصوتي الفعلي:\n{sample_syms}\n"
+        f"- قواعد صارمة: التزم بتفعيلات بحر ({best_meter}) وجوازاته بدقة تامة. لا تخلط بين الكامل (مُتَفَاعِلُنْ) والوافر (مُفَاعَلَتُنْ)، ولا بين السريع/الصخري (مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ فَاعِلُنْ) والرجز. وإذا كانت القصيدة شعبية ذات قافيتين (قافية للصدر وقافية للعجز) فلا تخلط بينهما ولا تدّعِ وجود سناد ردف."
+    )
+    return report_str, df
 
-
-
+# ==========================================
+# واجهة التطبيق الرئيسية (نفس كودك الأصلي السريع)
+# ==========================================
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 if GEMINI_API_KEY:
@@ -222,39 +225,30 @@ if GEMINI_API_KEY:
 
     st.write("---")
     st.markdown("### ✍️ 2. توجيهات الناقد الذكي")
+    poem_style = st.radio("اختر نمط القصيدة:", ["شعر فصيح (عمودي)", "شعر شعبي / نبطي / يمني"], horizontal=True)
     user_prompt = st.text_area(
         "💡 أدخل البيت الشعري في سطرين متتاليين (الصدر ثم العجز)، أو الصق قصيدتك كاملة في المربع أدناه:",
         value="عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي العَزائِمُ\nوَتَأتِي عَلَى قَدْرِ الكِرامِ المَكارِمُ"
     )
 
-    if st.button("🚀 ابدأ النقد الأدبي والعروضي الموثق"):
+    if st.button("🚀 ابدأ النقد الأدبي والعروضي الموثق", use_container_width=True):
         if not user_prompt.strip():
             st.error("الرجاء كتابة النص الشعري أولاً!")
         else:
-            lines = [line.strip() for line in user_prompt.strip().split('\n') if line.strip()]
-            num_lines = len(lines)
-            if num_lines == 2:
-                verse_count_info = "بيت واحد فقط (مكوّن من شطرين: صدر وعجز)"
-            elif num_lines % 2 == 0:
-                verse_count_info = f"{num_lines // 2} أبيات شعرية ({num_lines} شطراً)"
-            else:
-                verse_count_info = f"{num_lines} أسطر/أشطر شعرية"
+            is_fusha = (poem_style == "شعر فصيح (عمودي)")
+            meter_guidance, scansion_df = detect_arabic_meter_and_table(user_prompt, is_fusha)
+            st.session_state["scansion_df"] = scansion_df
 
-            extra_sources = f"\n[مرجع المستخدم المرفق]:\n{context_content[:3000]}\n" if context_content else ""
-            prosody_result = detect_arabic_meter(user_prompt)
-            prosody_directive = prosody_result
+            poem_sample = "\n".join(user_prompt.strip().split('\n')[:60])
+            full_prompt = f"""أنت ناقد أدبي وعروضي أكاديمي خبير في منصة الناقد الذكي.
+بيانات الضبط العروضي الرياضي المؤكدة:
+{meter_guidance}
 
-            full_prompt = f"""أنت بروفيسور محقق في الأدب العربي (الفصيح والشعبي والحُمَيني) وعلم العروض.
-            {prosody_directive}
-1. عدد الأبيات/الأشطر المؤكد هو: ({verse_count_info}). التزم به حرفياً.
-2. حدد نوع النص بدقة (فصيح عمودي، تفعيلة، أم شعبي/حُمَيني/زامل).
-3. الأمانة في التوثيق: اذكر الشاعر الحقيقي للمعروف، وقل "نص غير موثق في الدواوين" لغير المنشور دون اختلاق.
-4. العروض: للفصيح التزم بالبحور الـ 16 وجوازاتها دون ذكر عبارات تقنية. للشعبي حلل الإيقاع واللحن والقافية المقيدة واستخدم مصطلح "سناد الردف" بدلاً من الإقواء عند اختلاف حرف المد قبل الروي.
-5. نظّم التقرير في فقرات وعناوين فرعية دون جداول.
+النص الشعري المراد تحليله:
+{poem_sample}
 
-النص الشعري:
-"{user_prompt}"
-{extra_sources}
+مراجع إضافية مرفقة:
+{context_content[:3000]}
 
 قدّم التقرير في 4 أقسام:
 ### أولاً: التوثيق التاريخي والأدبي
@@ -267,10 +261,8 @@ if GEMINI_API_KEY:
                 valid_models = []
                 for m in client.models.list():
                     name = m.name.replace("models/", "")
-                
                     if "gemini" in name and "flash" in name and not any(x in name for x in ("vision", "embedding", "tts", "image", "audio", "1.5", "2.0", "2.5")):
                         valid_models.append(name)
-
 
                 for model_name in valid_models:
                     try:
@@ -294,13 +286,19 @@ if GEMINI_API_KEY:
         st.markdown(st.session_state["saved_report"])
         col1, col2 = st.columns(2)
         with col1:
-            st.download_button("📥 تحميل نصي (TXT)", st.session_state["saved_report"], "Smart_Critic_Report.txt")
+            st.download_button("📥 تحميل نصي (TXT)", st.session_state["saved_report"], "Smart_Critic_Report.txt", use_container_width=True)
         with col2:
             try:
                 pdf_bytes = create_arabic_pdf(st.session_state["saved_report"], st.session_state.get("saved_poem", ""))
-                st.download_button("📄 تحميل كتابي (PDF)", pdf_bytes, "Smart_Critic_Report.pdf", "application/pdf")
+                st.download_button("📄 تحميل كتابي (PDF)", pdf_bytes, "Smart_Critic_Report.pdf", "application/pdf", use_container_width=True)
             except Exception as pdf_err:
                 st.caption(f"تعذر تجهيز PDF: {pdf_err}")
+
+    if "scansion_df" in st.session_state and not st.session_state["scansion_df"].empty:
+        st.write("---")
+        st.markdown("### 📊 جدول التقطيع العروضي التفصيلي لجميع الأشطر")
+        st.dataframe(st.session_state["scansion_df"], use_container_width=True, height=350)
+        csv_bytes = st.session_state["scansion_df"].to_csv(index=False).encode("utf-8-sig")
+        st.download_button("📥 تحميل جدول تقطيع الأبيات (Excel / CSV)", csv_bytes, "Prosody_Scansion_Table.csv", "text/csv", use_container_width=True)
 else:
     st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
-
