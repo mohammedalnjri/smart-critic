@@ -183,8 +183,21 @@ if submitted:
             system_instruction = "أنت ناقد أدبي وعروضي خبير. اعتمد كلياً على التقرير العروضي المرفق ولا تخالفه. ميز بدقة بين الكامل (مُتَفَاعِلُنْ) والوافر (مُفَاعَلَتُنْ)، وبين السريع/الصخري (مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ فَاعِلُنْ) والرجز. انتبه للقوافي المزدوجة في الشعر الشعبي. نظم الإجابة إلى: أولاً: المعنى العام. ثانياً: التحليل البلاغي. ثالثاً: التحليل العروضي والإيقاعي. رابعاً: ملاحظات وتوجيهات."
             full_prompt = f"{prosody_report}\n\nالنص الشعري:\n{poem_sample_for_ai}"
             try:
-                client_fast = genai.Client(api_key=GEMINI_API_KEY, http_options={'timeout': 25.0})
-                response = client_fast.models.generate_content(model="gemini-3.8-flash", contents=full_prompt, config=types.GenerateContentConfig(system_instruction=system_instruction, temperature=0.2, thinking_config=types.ThinkingConfig(thinking_budget=0)))
+                            
+                client_fast = genai.Client(api_key=GEMINI_API_KEY, http_options={'timeout': 20.0})
+                response = None
+                for m_name in ["gemini-flash-latest", "gemini-2.5-flash-lite", "gemini-2.0-flash"]:
+                    try:
+                        response = client_fast.models.generate_content(model=m_name, contents=full_prompt, config=types.GenerateContentConfig(system_instruction=system_instruction, temperature=0.2))
+                        if response and response.text:
+                            break
+                    except Exception:
+                        continue
+                if response and response.text:
+                    st.session_state["final_report"] = response.text
+                else:
+                    st.error("تعذر الحصول على رد من خوادم Gemini حالياً، يرجى المحاولة بعد قليل.")
+
 
 
                 st.session_state["final_report"] = response.text
