@@ -188,7 +188,7 @@ if submitted:
                             break
                     except Exception:
                         pass
-                                    if response_text:
+            if response_text:
                 st.session_state["final_report"] = response_text
             else:
                 st.session_state["final_report"] = f"### التقرير العروضي المعتمد\nتم فحص القصيدة رياضياً، وثبت انتماؤها إلى **{dominant_meter}** (عدد الأشطر: **{len(scansion_df)}**)."
