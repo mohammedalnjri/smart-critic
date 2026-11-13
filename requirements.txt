@@ -7,5 +7,8 @@ duckduckgo-search
 google-genai
 fpdf2
 matplotlib
+mishkal
+pyarabic
+pandas
 
 
