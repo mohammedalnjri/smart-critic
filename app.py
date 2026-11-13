@@ -14,7 +14,6 @@ st.set_page_config(
     layout="centered"
 )
 
-# تنسيق الاتجاه العربي وتلوين زر التشغيل باللون الأزرق
 st.markdown("""
 <style>
     .stMarkdown, .stTextArea, .stAlert, .stDataFrame {
@@ -24,15 +23,15 @@ st.markdown("""
     [data-testid="collapsedControl"] {
         display: none;
     }
-    div.stButton > button[kind="primary"] {
+    div.stButton > button {
         background-color: #1E6BE6 !important;
-        border-color: #1E6BE6 !important;
         color: white !important;
+        border: none !important;
         font-weight: bold !important;
     }
-    div.stButton > button[kind="primary"]:hover {
+    div.stButton > button:hover {
         background-color: #1554B8 !important;
-        border-color: #1554B8 !important;
+        color: white !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -227,8 +226,9 @@ if GEMINI_API_KEY:
         value="عَلى قَدْرِ أهْلِ العَزْمِ تَأتِي العَزائِمُ\nوَتَأتِي عَلَى قَدْرِ الكِرامِ المَكارِمُ"
     )
 
-    if st.button("🚀 ابدأ النقد الأدبي والعروضي الموثق", type="primary", use_container_width=True):
+    if st.button("🚀 ابدأ النقد الأدبي والعروضي الموثق", use_container_width=True):
         if not user_prompt.strip():
             st.error("الرجاء كتابة النص الشعري أولاً!")
         else:
             is_fusha = (poem_style == "شعر فصيح (عمودي)")
+            prosody_report, scansion_df, dominant_meter = analyze_full_poem_prosody(user_prompt, is_fusha)
