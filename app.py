@@ -32,7 +32,6 @@ st.title("🤖 منصة الناقد الذكي - Smart Critic")
 st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; margin-top: -15px;'>🎨 تصميم المبرمج محمد النجري</p>", unsafe_allow_html=True)
 st.subheader("التحليل الأدبي والعروضي الصارم بأحدث التقنيات البرمجية")
 
-# تحميل محرك التشكيل في الذاكرة لتسريع الأداء
 @st.cache_resource
 def load_vocalizer():
     return mishkal.tashkeel.TashkeelClass()
@@ -40,7 +39,7 @@ def load_vocalizer():
 vocalizer = load_vocalizer()
 
 # ==========================================
-# دالة إنشاء ملف PDF عربي منسق بخط عريض
+# دالة إنشاء ملف PDF عربي منسق
 # ========================================== 
 def shape_arabic(text):
     return get_display(arabic_reshaper.reshape(text))
@@ -56,7 +55,6 @@ def create_arabic_pdf(report_text, poem_text):
         noto_path = fm.findfont("DejaVu Sans:weight=bold")
     pdf.add_font("GoogleArabic", "", noto_path)
     
-    # ترويسة المنصة واسم المبرمج بخط عربي عريض وأنيق
     pdf.set_font("GoogleArabic", size=19)
     pdf.set_text_color(20, 80, 160)
     pdf.set_x(12)
@@ -68,7 +66,6 @@ def create_arabic_pdf(report_text, poem_text):
     pdf.multi_cell(186, 9, shape_arabic("تصميم وتطوير المبرمج: محمد النجري"), align="C")
     pdf.ln(6)
     
-    # نص التقرير بنفس الخط العربي الغامق الأنيق
     pdf.set_font("GoogleArabic", size=12)
     pdf.set_text_color(25, 25, 25)
     raw_all = poem_text + "\n\n" + report_text
@@ -80,19 +77,10 @@ def create_arabic_pdf(report_text, poem_text):
             pdf.multi_cell(186, 8.5, shape_arabic(stripped), align="R")
     return bytes(pdf.output())
 
-
 # ==========================================
-# محرك التشكيل والتقطيع العروضي الرياضي (لـ 1000+ بيت)
+# محرك التشكيل والتقطيع العروضي الرياضي
 # ==========================================
-def normalize_arabic(text):
-    text = re.sub(r'[\u064B-\u065F\u0670]', '', text)
-    text = re.sub(r'[أإآ]', 'ا', text)
-    text = re.sub(r'ى', 'ي', text)
-    text = re.sub(r'[^\u0621-\u064A\s]', '', text)
-    return re.sub(r'\s+', ' ', text).strip()
-
 def auto_diacritize_if_needed(text: str, is_fusha: bool) -> str:
-    """يشكّل النص الفصيح تلقائياً إذا لم يقم المستخدم بتشكيله"""
     if not is_fusha:
         return text
     letters_count = len(araby.strip_tashkeel(text))
@@ -102,12 +90,9 @@ def auto_diacritize_if_needed(text: str, is_fusha: bool) -> str:
     return text
 
 def line_to_prosody_symbols(line: str, is_fusha: bool = True) -> str:
-    """يحول الشطر إلى رموز عروضية (/ و 0) بدقة رياضية صارمة"""
     text = line.strip().replace("ـ", "")
-    # معالجة المد (آ)
     text = text.replace('آ', 'أَا')
     
-    # فك التضعيف (الشدة) إلى حرف ساكن فمتحرك
     chars = list(text)
     expanded = []
     for ch in chars:
@@ -119,13 +104,12 @@ def line_to_prosody_symbols(line: str, is_fusha: bool = True) -> str:
             expanded.append(ch)
     
     text = "".join(expanded)
-    # معالجة همزة الوصل في (ال) التعريف وسط الكلام
     text = re.sub(r'(?<=\S)\s+ال', ' لْ', text)
     text = re.sub(r'^ال', 'اَلْ', text)
     
     symbols = ""
-    vowels = {'\u064E', '\u064F', '\u0650'} # فتحة، ضمة، كسرة
-    tanween = {'\u064B', '\u064C', '\u064D'} # تنوين
+    vowels = {'\u064E', '\u064F', '\u0650'}
+    tanween = {'\u064B', '\u064C', '\u064D'}
     sukun = '\u0652'
     long_vowels = {'ا', 'و', 'ي', 'ى'}
     
@@ -157,12 +141,10 @@ def line_to_prosody_symbols(line: str, is_fusha: bool = True) -> str:
                     symbols += '/'
         i += 1
 
-    # في الفصحى: إشباع حركة الحرف الأخير (القافية) بحرف مد ساكن
     if is_fusha and symbols.endswith('/'):
         symbols += '0'
     return symbols
 
-# أنماط البحور الخليلية والشعبية الدقيقة لمنع أي خلط بين البحور
 METERS_SIGNATURES = [
     ("الكامل التام", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ", r"^(///0//0|/0/0//0){2}(///0//0|/0/0//0|///0//|/0/0//|///0/0|/0/0/0)$"),
     ("الكامل المجزوء", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ", r"^(///0//0|/0/0//0)(///0//0|/0/0//0|///0//00|/0/0//00)$"),
@@ -176,17 +158,15 @@ METERS_SIGNATURES = [
     ("الخفيف", "فَاعِلَاتُنْ مُسْتَفْعِلُنْ فَاعِلَاتُنْ", r"^(/0//0/0|//0/0/0)(/0/0//0|//0//0)(/0//0/0|//0/0/0|/0//0|/0/0)$"),
     ("المتقارب", "فَعُولُنْ فَعُولُنْ فَعُولُنْ فَعُولُنْ", r"^(//0/0|//0){3}(//0/0|//0|//00|/0)$"),
     ("المتدارك / الخبب", "فَاعِلُنْ فَاعِلُنْ فَاعِلُنْ فَاعِلُنْ", r"^(/0//0|///0|/0/0){3,4}$"),
-    ("الهزج", "مَفَاعِيلُنْ مَفَاعِيلُنْ", r"^(//0/0/0|//0//0)(//0/0/0|//0/0)$"),
+    ("الهزج", "مَفَاعِيلُنْ مَفَاعِيلُنْ", r"^(//0/0/0|//0//0)(//0/0/0|//0/0)$")
 ]
 
 def classify_symbols(sym: str) -> tuple:
-    """يطابق الرموز الصوتية مع البصمة الرياضية لكل بحر"""
     if not sym:
         return ("غير محدد", "")
     for name, tafeelat, pattern in METERS_SIGNATURES:
         if re.match(pattern, sym):
             return (name, tafeelat)
-    # مطابقة مرنة في حال وجود زحافات مركبة
     if "///0//0" in sym and len(sym) >= 18:
         return ("الكامل التام", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ")
     if "//0///0" in sym and sym.endswith("//0/0"):
@@ -203,13 +183,11 @@ def classify_symbols(sym: str) -> tuple:
     return ("بحر مركب / يحتاج مراجعة التشكيل", "يُرجى ضبط الحركات")
 
 def analyze_full_poem_prosody(raw_text: str, is_fusha: bool):
-    """يقطع القصيدة كاملة حتى 1000+ بيت ويعيد التقرير والجدول التفصيلي"""
     clean_kashida = raw_text.replace("ـ", "")
     raw_lines = [l.strip() for l in clean_kashida.strip().split('\n') if l.strip()]
     if not raw_lines:
         return "", pd.DataFrame(), "غير محدد"
 
-    # تقسيم الأبيات إذا كان الصدر والعجز في سطر واحد مفصول بـ = أو ***
     ashطر = []
     for line in raw_lines:
         if '=' in line:
@@ -241,13 +219,44 @@ def analyze_full_poem_prosody(raw_text: str, is_fusha: bool):
     df = pd.DataFrame(rows)
     dominant_meter = max(votes, key=votes.get) if votes else "يحتاج مراجعة التشكيل"
     
-    # استخراج تفعيلات البحر السائد
     dominant_tafeelat = ""
     for name, taf, _ in METERS_SIGNATURES:
         if name == dominant_meter:
             dominant_tafeelat = taf
             break
 
-    sample_syms = "\n".join([f"- الشطر ({r['م']}): {r['الشطر']} -> الرموز: `{r['الرموز العروضية']}` ({r['البحر']})" for r in rows[:6]])
+    sample_syms = "\n".join([f"- الشطر ({r['م']}): {r['الشطر']} -> الرموز: {r['الرموز العروضية']} ({r['البحر']})" for r in rows[:6]])
     
-    prosody_summary = (
+    prosody_summary = f"""البحر الشعري المؤكد رياضياً للقصيدة (من واقع تحليل {len(rows)} شطر): **بحر {dominant_meter}**
+- التفعيلات القياسية: **{dominant_tafeelat}**
+- عينة من التقطيع الصوتي الفعلي للأشطر الأولى:
+{sample_syms}
+تنبيه صارم للنموذج: التزم بهذا البحر وتفعيلاته بدقة 100% ولا تغيره أبداً."""
+
+    return prosody_summary, df, dominant_meter
+
+# ==========================================
+# واجهة التطبيق الرئيسية والربط مع Gemini
+# ==========================================
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+
+if GEMINI_API_KEY:
+    client = genai.Client(api_key=GEMINI_API_KEY)
+
+    st.write("---")
+    st.markdown("### 📚 1. المراجع والنصوص المراد تحليلها (اختياري)")
+    uploaded_file = st.file_uploader("ارفع الملف أو المرجع العربي (TXT أو PDF):", type=["txt", "pdf"])
+    
+    context_content = ""
+    if uploaded_file is not None:
+        try:
+            context_content = uploaded_file.read().decode("utf-8", errors="ignore")
+            st.success("تم تحميل المرجع بنجاح!")
+        except Exception as e:
+            st.error(f"خطأ في قراءة الملف: {e}")
+
+    st.write("---")
+    st.markdown("### ✍️ 2. توجيهات الناقد الذكي")
+    
+    poem_style = st.radio(
+        "اختر نمط القصيدة لضبط خوارزمية التقطيع:",
