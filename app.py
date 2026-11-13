@@ -163,7 +163,7 @@ def detect_arabic_meter(raw_text):
             "الرمل": 0, "المتقارب": 0, "الرجز": 0, "الخفيف": 0, "المتدارك": 0
         }
         sample_symbols = ""
-            for idx, line in enumerate(lines[:10]):
+        for idx, line in enumerate(lines[:10]):
             sym = line_to_prosody_symbols(line)
             if idx == 0:
                 sample_symbols = sym
