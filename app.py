@@ -174,6 +174,29 @@ def detect_arabic_meter_and_table(raw_text, is_fusha=True):
     raw_lines = [l.strip() for l in clean_kashida.strip().split('\n') if l.strip()]
     if not raw_lines:
         return "", pd.DataFrame()
+        
+    # التحقق من نسبة التشكيل في النص الفصيح
+    letters_only = re.sub(r'[^\u0621-\u064A]', '', clean_kashida)
+    tashkeel_only = re.findall(r'[\u064B-\u0652]', clean_kashida)
+    has_enough_tashkeel = (len(letters_only) > 0 and (len(tashkeel_only) / len(letters_only)) >= 0.25)
+
+    # مسار 1: النص الفصيح غير المشكول -> توجيه النموذج للتشكيل الصرفي الدقيق أولاً
+    if is_fusha and not has_enough_tashkeel:
+        guidance = (
+            "تنبيه عروضي صارم: النص المدخل غير مشكول بالحركات. اتبع الخطوات التالية بدقة رياضية:\n"
+            "1. شكّل كل كلمة تشكيلاً نحوياً وصرفياً صحيحاً في ذهنك أولاً بناءً على النطق الصحيح.\n"
+            "2. اكتب الكتابة العروضية الحقيقية (فك المشدد، تحويل التنوين لنون ساكنة، حذف همزة الوصل وسط الكلام، وإشباع آخر الشطر).\n"
+            "3. استخرج الرموز (/ للحرف المتحرك، 0 للحرف الساكن) بحيث يطابق عدد الرموز عدد حروف الكتابة العروضية 100%.\n"
+            "4. قارن الرموز بمفاتيح الخليل بدقة:\n"
+            "   - البسيط: مُسْتَفْعِلُنْ (/0/0//0) فَاعِلُنْ (/0//0) مُسْتَفْعِلُنْ (/0/0//0) فَعِلُنْ (///0).\n"
+            "   - الطويل: فَعُولُنْ (//0/0) مَفَاعِيلُنْ (//0/0/0) فَعُولُنْ (//0/0) مَفَاعِلُنْ (//0//0).\n"
+            "   - الكامل: مُتَفَاعِلُنْ (///0//0) ثلاث مرات.\n"
+            "   - الوافر: مُفَاعَلَتُنْ (//0///0) مرتين ثم فَعُولُنْ (//0/0).\n"
+            "   - السريع: مُسْتَفْعِلُنْ (/0/0//0) مرتين ثم فَاعِلُنْ (/0//0)."
+        )
+        return guidance, pd.DataFrame()
+
+    # مسار 2: النص المشكول أو الشعبي/النبطي -> الحساب الرياضي المباشر + الجدول
     ashatar = []
     for line in raw_lines:
         if '=' in line:
@@ -182,6 +205,7 @@ def detect_arabic_meter_and_table(raw_text, is_fusha=True):
             ashatar.extend([p.strip() for p in line.split('***') if p.strip()])
         else:
             ashatar.append(line)
+            
     rows = []
     votes = {}
     for idx, shatr in enumerate(ashatar):
@@ -190,18 +214,20 @@ def detect_arabic_meter_and_table(raw_text, is_fusha=True):
         if "يُطابق" not in meter_name:
             votes[meter_name] = votes.get(meter_name, 0) + 1
         rows.append({"م": idx + 1, "الشطر": shatr, "الرموز العروضية": sym, "البحر": meter_name, "التفعيلات": tafeelat})
+        
     df = pd.DataFrame(rows)
     best_meter = max(votes, key=votes.get) if votes else "يُحدد من التقطيع الصوتي الدقيق"
     best_tafeelat = next((taf for name, taf, _ in METERS_SIGNATURES if name == best_meter), "")
     sample_syms = "\n".join([f"- الشطر ({r['م']}): {r['الشطر']} -> الرموز: {r['الرموز العروضية']} ({r['البحر']})" for r in rows[:6]])
     
     report_str = (
-        f"البحر الشعري المؤكد وفق البصمة الإيقاعية لأشطر القصيدة (من واقع {len(rows)} شطر) هو: **بحر {best_meter}**\n"
+        f"البحر الشعري المؤكد رياضياً (من واقع {len(rows)} شطر) هو: **بحر {best_meter}**\n"
         f"- التفعيلات القياسية: **{best_tafeelat}**\n"
         f"- عينة التقطيع الصوتي الفعلي:\n{sample_syms}\n"
-        f"- قواعد صارمة: التزم بتفعيلات بحر ({best_meter}) وجوازاته بدقة تامة. لا تخلط بين الكامل (مُتَفَاعِلُنْ) والوافر (مُفَاعَلَتُنْ)، ولا بين السريع/الصخري (مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ فَاعِلُنْ) والرجز. وإذا كانت القصيدة شعبية ذات قافيتين (قافية للصدر وقافية للعجز) فلا تخلط بينهما ولا تدّعِ وجود سناد ردف."
+        f"- قواعد صارمة: التزم بتفعيلات بحر ({best_meter}) وجوازاته بدقة تامة. لا تخلط بين الكامل والوافر، ولا بين السريع/الصخري والرجز. وإذا كانت القصيدة شعبية ذات قافيتين فلا تخلط بينهما."
     )
     return report_str, df
+
 
 # ==========================================
 # واجهة التطبيق الرئيسية (نفس كودك الأصلي السريع)
