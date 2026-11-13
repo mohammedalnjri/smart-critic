@@ -188,3 +188,23 @@ if submitted:
                             break
                     except Exception:
                         pass
+                                    if response_text:
+                st.session_state["final_report"] = response_text
+            else:
+                st.session_state["final_report"] = f"### التقرير العروضي المعتمد\nتم فحص القصيدة رياضياً، وثبت انتماؤها إلى **{dominant_meter}** (عدد الأشطر: **{len(scansion_df)}**)."
+
+           if "scansion_df" in st.session_state:
+               st.write("---")
+               st.success(f"⚖️ **النتيجة العروضية:** البحر السائد هو **{st.session_state['dominant_meter']}** (تم تقطيع {len(st.session_state['scansion_df'])} شطر).")
+               st.markdown(st.session_state["final_report"])
+               st.write("---")
+               st.markdown("### 📊 جدول التقطيع العروضي التفصيلي")
+               st.dataframe(st.session_state["scansion_df"], use_container_width=True, height=350)
+    col1, col2 = st.columns(2)
+    with col1:
+        pdf_bytes = create_arabic_pdf(st.session_state["final_report"], st.session_state["final_poem"])
+        st.download_button(label="📄 تحميل التقرير (PDF)", data=pdf_bytes, file_name="Smart_Critic_Report.pdf", mime="application/pdf", use_container_width=True)
+    with col2:
+        csv_bytes = st.session_state["scansion_df"].to_csv(index=False).encode("utf-8-sig")
+        st.download_button(label="📥 تحميل تقطيع الأبيات (CSV)", data=csv_bytes, file_name="Prosody_Scansion_Table.csv", mime="text/csv", use_container_width=True)
+
