@@ -47,15 +47,14 @@ def shape_arabic(text):
     return get_display(arabic_reshaper.reshape(text))
 
 def create_arabic_pdf(report_text, poem_text):
-    import matplotlib.font_manager as fm
+    
     pdf = FPDF()
     pdf.set_margins(12, 12, 12)
     pdf.add_page()
     
-    noto_path = "/usr/share/fonts/truetype/noto/NotoSansArabic-Bold.ttf"
-    if not os.path.exists(noto_path):
-        noto_path = fm.findfont("DejaVu Sans:weight=bold")
-    pdf.add_font("GoogleArabic", "", noto_path)
+    pdf.add_font("GoogleArabic", "", "Cairo-Regular.ttf", uni=True)
+    pdf.add_font("GoogleArabic", "B", "Cairo-Bold.ttf", uni=True)
+
     
     pdf.set_font("GoogleArabic", size=19)
     pdf.set_text_color(20, 80, 160)
