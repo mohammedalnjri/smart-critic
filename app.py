@@ -405,7 +405,7 @@ if GEMINI_API_KEY:
     if "scansion_df" in st.session_state and not st.session_state["scansion_df"].empty:
         st.write("---")
         st.markdown("### 📊 جدول التقطيع العروضي التفصيلي لجميع الأشطر")
-        st.dataframe(st.session_state["scansion_df"], use_container_width=True, height=350)
+        st.table(st.session_state["scansion_df"])
         csv_bytes = st.session_state["scansion_df"].to_csv(index=False).encode("utf-8-sig")
         st.download_button("📥 تحميل جدول تقطيع الأبيات (Excel / CSV)", csv_bytes, "Prosody_Scansion_Table.csv", "text/csv", use_container_width=True)
 else:
