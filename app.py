@@ -181,7 +181,7 @@ def classify_symbols(sym):
         if re.match(pattern, sym):
             return (name, tafeelat)
     if ("///0//0" in sym or sym.startswith(("/0/0//0", "//0//0"))) and len(sym) >= 15:
-    return ("الكامل التام", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ")
+        return ("الكامل التام", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ")
     if "//0///0" in sym and sym.endswith("//0/0"):
         return ("الوافر التام", "مُفَاعَلَتُنْ مُفَاعَلَتُنْ فَعُولُنْ")
     if sym.startswith(("/0/0//0/0/0//0", "//0//0/0/0//0")):
