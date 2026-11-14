@@ -321,7 +321,7 @@ if GEMINI_API_KEY:
 
 
 
-                for model_name in valid_models:
+            for model_name in valid_models:
                     try:
                         response = client.models.generate_content(model=model_name, contents=full_prompt)
                         if response and response.text:
