@@ -54,10 +54,12 @@ class StyledPDF(FPDF):
 
 def print_rtl_paragraph(pdf, text, line_height=8.5, max_chars=75, align='R'):
     for paragraph in text.split('\n'):
-        clean_para = paragraph.replace('**', '').replace('###', '').strip()
-        if not clean_para or clean_para == "---":
-            if clean_para == "---":
-                pdf.ln(3)
+        # تجاهل خطوط الفواصل الخاصة بجداول الماركداون مثل |---|---|
+        if set(paragraph.strip()) <= {'|', '-', ':', ' '}:
+            continue
+        # تنظيف النجوم والهاشتاق وعلامات الجدول لتظهر الجمل نظيفة ومرتبة
+        clean_para = paragraph.replace('**', '').replace('###', '').replace('|', ' - ').strip(' -')
+        if not clean_para:
             continue
         lines = textwrap.wrap(clean_para, width=max_chars)
         for line in lines:
@@ -69,26 +71,27 @@ def create_arabic_pdf(report_text, poem_text=""):
     pdf.set_margins(12, 12, 12)
     pdf.add_page()
 
-    # تفعيل المحرك العربي المدمج لضمان سلامة حرف الألف والتشكيل
+    # تفعيل المحرك العربي المدمج لضمان سلامة الحروف والألفات
     pdf.set_text_shaping(True)
 
-    # تحميل خط تجول (Tajawal) المطابق لمدونتك
-    pdf.add_font("Tajawal", "", "Tajawal-Regular.ttf")
-    pdf.add_font("Tajawal", "B", "Tajawal-Bold.ttf")
+    # تحميل أوزان خط المراعي (Almarai) المطابق لمدونة بلوجر
+    pdf.add_font("Almarai", "", "Almarai-Regular.ttf")
+    pdf.add_font("Almarai", "B", "Almarai-Bold.ttf")
+    pdf.add_font("AlmaraiExtra", "B", "Almarai-ExtraBold.ttf")
 
-    # 1. العنوان الرئيسي: أكبر (21) وأغمق لوناً
-    pdf.set_font("Tajawal", "B", size=21)
+    # 1. العنوان الرئيسي: خط ExtraBold (أغمق وأسمك) وحجم 21 بلون كحلي داكن
+    pdf.set_font("AlmaraiExtra", "B", size=21)
     pdf.set_text_color(10, 45, 110)
     print_rtl_paragraph(pdf, "منصة الناقد الذكي للتحليل الأدبي والعروضي", line_height=12, max_chars=45, align='C')
 
-    # 2. اسم المبرمج: كبير (14) وأغمق لوناً
-    pdf.set_font("Tajawal", "B", size=14)
+    # 2. اسم المبرمج: خط ExtraBold (أغمق وأسمك) وحجم 14 بلون ذهبي داكن
+    pdf.set_font("AlmaraiExtra", "B", size=14)
     pdf.set_text_color(130, 80, 10)
     print_rtl_paragraph(pdf, "تصميم وتطوير المبرمج: محمد النجري", line_height=10, max_chars=55, align='C')
     pdf.ln(5)
 
-    # 3. باقي الصفحة: خط تجول الغامق (B) بحجم 12 ولون أسود فحمي مريح
-    pdf.set_font("Tajawal", "B", size=12)
+    # 3. باقي الصفحة: خط Almarai-Bold الغامق بحجم 12 ولون أسود فحمي مريح
+    pdf.set_font("Almarai", "B", size=12)
     pdf.set_text_color(25, 25, 25)
     raw_all = poem_text + "\n\n" + report_text
     no_tashkeel = re.sub(r'[\u064B-\u065F\u0670]', '', raw_all)
@@ -96,6 +99,7 @@ def create_arabic_pdf(report_text, poem_text=""):
     print_rtl_paragraph(pdf, no_tashkeel, line_height=8.5, max_chars=75, align='R')
 
     return bytes(pdf.output())
+
 
 
 # ==========================================
