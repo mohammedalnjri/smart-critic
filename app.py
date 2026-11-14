@@ -358,29 +358,28 @@ if GEMINI_API_KEY:
 
 
 
-        @st.cache_data(ttl=86400, show_spinner=False)
-        def get_cached_analysis(prompt_text):
-            last_err = ""
+            with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
+            final_report = ""
+            last_error = ""
             api_keys = [st.secrets[k] for k in ["GEMINI_API_KEY", "GEMINI_API_KEY_2"] if k in st.secrets]
             gemini_models = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
 
             for current_key in api_keys:
+                if final_report:
+                    break
                 temp_client = genai.Client(api_key=current_key)
                 for m_name in gemini_models:
                     try:
                         response = temp_client.models.generate_content(
                             model=m_name,
-                            contents=prompt_text
+                            contents=full_prompt
                         )
                         if response and response.text:
-                            return response.text, ""
+                            final_report = response.text
+                            break
                     except Exception as e:
-                        last_err = str(e)
+                        last_error = str(e)
                         continue
-            return "", last_err
-
-        with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
-            final_report, last_error = get_cached_analysis(full_prompt)
 
             if final_report:
                 st.session_state["saved_report"] = final_report
