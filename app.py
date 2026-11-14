@@ -364,7 +364,7 @@ if GEMINI_API_KEY:
                 api_keys = [st.secrets[k] for k in ["GEMINI_API_KEY", "GEMINI_API_KEY_2"] if k in st.secrets]
                 gemini_models = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
 
-             for current_key in api_keys:
+                for current_key in api_keys:
                     if final_report:
                     break
                 temp_client = genai.Client(api_key=current_key)
@@ -381,7 +381,7 @@ if GEMINI_API_KEY:
                         last_error = str(e)
                         continue
 
-            if final_report:
+                if final_report:
                 st.session_state["saved_report"] = final_report
                 st.session_state["saved_poem"] = poem_sample
             else:
