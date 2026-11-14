@@ -331,7 +331,7 @@ if GEMINI_API_KEY:
                         time.sleep(1)
                         continue
 
-                if final_report:
+            if final_report:
                     st.session_state["saved_report"] = final_report
                     st.session_state["saved_poem"] = user_prompt
                 else:
