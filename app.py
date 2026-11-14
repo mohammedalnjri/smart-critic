@@ -359,13 +359,13 @@ if GEMINI_API_KEY:
 
 
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
-            final_report = ""
-            last_error = ""
-            api_keys = [st.secrets[k] for k in ["GEMINI_API_KEY", "GEMINI_API_KEY_2"] if k in st.secrets]
-            gemini_models = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
+                final_report = ""
+                last_error = ""
+                api_keys = [st.secrets[k] for k in ["GEMINI_API_KEY", "GEMINI_API_KEY_2"] if k in st.secrets]
+                gemini_models = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
 
-            for current_key in api_keys:
-                if final_report:
+             for current_key in api_keys:
+                    if final_report:
                     break
                 temp_client = genai.Client(api_key=current_key)
                 for m_name in gemini_models:
