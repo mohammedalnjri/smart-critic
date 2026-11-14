@@ -52,6 +52,27 @@ class StyledPDF(FPDF):
         self.set_fill_color(250, 248, 244)
         self.rect(0, 0, 210, 297, 'F')
 
+    def footer(self):
+        # الانتقال إلى مسافة 16 ملم من أسفل الصفحة
+        self.set_y(-16)
+        # رسم خط فاصل ذهبي أنيق
+        self.set_draw_color(197, 160, 89)
+        self.set_line_width(0.4)
+        self.line(12, self.get_y(), 198, self.get_y())
+        self.ln(2)
+        
+        # طباعة اسم المنصة ورقم الصفحة
+        self.set_font("Almarai", "B", size=9)
+        self.set_text_color(90, 90, 90)
+        footer_text = f"منصة الناقد الذكي للتحليل الأدبي والعروضي  |  صفحة {self.page_no()}"
+        self.cell(0, 5, footer_text, ln=True, align='C')
+        
+        # طباعة رابط مدونتك القابل للنقر
+        blog_url = "https://alnjrimohammed.blogspot.com/"
+        self.set_text_color(15, 70, 150)
+        self.cell(0, 5, blog_url, ln=True, align='C', link=blog_url)
+
+
 def print_rtl_paragraph(pdf, text, line_height=8.5, max_chars=75, align='R'):
     for paragraph in text.split('\n'):
         # تجاهل خطوط الفواصل الخاصة بجداول الماركداون مثل |---|---|
@@ -69,6 +90,7 @@ def print_rtl_paragraph(pdf, text, line_height=8.5, max_chars=75, align='R'):
 def create_arabic_pdf(report_text, poem_text=""):
     pdf = StyledPDF()
     pdf.set_margins(12, 12, 12)
+    pdf.set_auto_page_break(auto=True, margin=20)
     pdf.add_page()
 
     # تفعيل المحرك العربي المدمج لضمان سلامة الحروف والألفات
