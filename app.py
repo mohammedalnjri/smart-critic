@@ -315,7 +315,10 @@ if GEMINI_API_KEY:
 
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
                 final_report = ""
-                valid_models = ["gemini-2.5-flash", "gemini-2.5-pro"]
+            available = [m.name.replace("models/", "") for m in client.models.list() if "gemini" in m.name]
+            preferred = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-1.5-flash"]
+            valid_models = [m for m in preferred if m in available] + [m for m in available if "flash" in m and m not in preferred]
+
 
 
                 for model_name in valid_models:
