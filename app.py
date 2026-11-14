@@ -288,7 +288,7 @@ if GEMINI_API_KEY:
             meter_guidance, scansion_df = detect_arabic_meter_and_table(user_prompt, is_fusha)
             st.session_state["scansion_df"] = scansion_df
 
-                    lines_list = [l.strip() for l in user_prompt.strip().split('\n') if l.strip()]
+        lines_list = [l.strip() for l in user_prompt.strip().split('\n') if l.strip()]
         if len(lines_list) == 2:
             poem_sample = f"بيت شعري واحد مكون من شطرين:\n- الصدر (الشطر الأول): {lines_list[0]}\n- العجز (الشطر الثاني): {lines_list[1]}"
         else:
