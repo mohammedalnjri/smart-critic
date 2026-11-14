@@ -90,13 +90,16 @@ def create_arabic_pdf(report_text, poem_text=""):
     print_rtl_paragraph(pdf, "تصميم وتطوير المبرمج: محمد النجري", line_height=10, max_chars=55, align='C')
     pdf.ln(5)
 
-    # 3. باقي الصفحة: خط Almarai-Bold الغامق بحجم 12 ولون أسود فحمي مريح
+    # 3. طباعة الأبيات بالتشكيل الكامل باللون الكحلي المميز
     pdf.set_font("Almarai", "B", size=12)
-    pdf.set_text_color(25, 25, 25)
-    raw_all = poem_text + "\n\n" + report_text
-    no_tashkeel = re.sub(r'[\u064B-\u065F\u0670]', '', raw_all)
+    pdf.set_text_color(15, 50, 100)
+    clean_poem_for_pdf = poem_text.replace("بيت شعري واحد مكون من شطرين:\n", "")
+    print_rtl_paragraph(pdf, clean_poem_for_pdf, line_height=9.5, max_chars=75, align='R')
+    pdf.ln(5)
 
-    print_rtl_paragraph(pdf, no_tashkeel, line_height=8.5, max_chars=75, align='R')
+    # 4. طباعة التقرير النقدي والعروضي بالتشكيل الكامل
+    pdf.set_text_color(25, 25, 25)
+    print_rtl_paragraph(pdf, report_text, line_height=9.0, max_chars=75, align='R')
 
     return bytes(pdf.output())
 
