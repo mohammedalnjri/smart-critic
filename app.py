@@ -360,6 +360,7 @@ if GEMINI_API_KEY:
     with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
             final_report = ""
             last_error = ""
+            prompt_to_send = full_prompt if "full_prompt" in locals() else f"حلّل النص الشعري التالي تحليلاً عروضياً وبلاغياً دقيقاً:\n\n{user_prompt}"
             api_keys = [st.secrets[k] for k in ["GEMINI_API_KEY", "GEMINI_API_KEY_2"] if k in st.secrets]
             gemini_models = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
 
