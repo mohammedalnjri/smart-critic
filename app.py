@@ -44,26 +44,17 @@ st.subheader("التحليل الأدبي والعروضي الصارم بأحد
 # دالة إنشاء ملف PDF عربي منسق (نفس دالتك الأصلية)
 # ========================================== 
 import textwrap
-import arabic_reshaper
-from bidi.algorithm import get_display
+import re
 
-# تهيئة المرسام العربي لمنع اختفاء حرف الألف وضبط الاتصال
-reshaper = arabic_reshaper.ArabicReshaper(
-    configuration={
-        'delete_harakat': False,
-        'support_ligatures': False,
-    }
-)
+# تلوين خلفية كل صفحة تلقائياً بنفس اللون العاجي الدافئ لمدونتك
+class StyledPDF(FPDF):
+    def header(self):
+        self.set_fill_color(250, 248, 244)
+        self.rect(0, 0, 210, 297, 'F')
 
-def shape_arabic(text):
-    if not text:
-        return ""
-    reshaped_text = reshaper.reshape(text)
-    return get_display(reshaped_text)
-
-def print_rtl_paragraph(pdf, text, line_height=8.5, max_chars=72, align='R'):
+def print_rtl_paragraph(pdf, text, line_height=8.5, max_chars=75, align='R'):
     for paragraph in text.split('\n'):
-        clean_para = paragraph.strip()
+        clean_para = paragraph.replace('**', '').replace('###', '').strip()
         if not clean_para or clean_para == "---":
             if clean_para == "---":
                 pdf.ln(3)
@@ -71,35 +62,38 @@ def print_rtl_paragraph(pdf, text, line_height=8.5, max_chars=72, align='R'):
         lines = textwrap.wrap(clean_para, width=max_chars)
         for line in lines:
             pdf.set_x(12)
-            pdf.cell(186, line_height, shape_arabic(line), ln=True, align=align)
+            pdf.cell(186, line_height, line, ln=True, align=align)
 
 def create_arabic_pdf(report_text, poem_text=""):
-    pdf = FPDF()
+    pdf = StyledPDF()
     pdf.set_margins(12, 12, 12)
     pdf.add_page()
 
-    # تحميل خط Cairo العادي والعريض
-    pdf.add_font("GoogleArabic", "", "Cairo-Regular.ttf", uni=True)
-    pdf.add_font("GoogleArabic", "B", "Cairo-Bold.ttf", uni=True)
+    # تفعيل المحرك العربي المدمج لضمان سلامة حرف الألف والتشكيل
+    pdf.set_text_shaping(True)
 
-    # 1. العنوان الرئيسي: أكبر (21) وأغمق لوناً (أزرق كحلي داكن) مع خط عريض B
-    pdf.set_font("GoogleArabic", "B", size=21)
+    # تحميل خط تجول (Tajawal) المطابق لمدونتك
+    pdf.add_font("Tajawal", "", "Tajawal-Regular.ttf")
+    pdf.add_font("Tajawal", "B", "Tajawal-Bold.ttf")
+
+    # 1. العنوان الرئيسي: أكبر (21) وأغمق لوناً
+    pdf.set_font("Tajawal", "B", size=21)
     pdf.set_text_color(10, 45, 110)
     print_rtl_paragraph(pdf, "منصة الناقد الذكي للتحليل الأدبي والعروضي", line_height=12, max_chars=45, align='C')
 
-    # 2. اسم المبرمج: كبير (14) وأغمق لوناً (ذهبي/بني داكن) مع خط عريض B
-    pdf.set_font("GoogleArabic", "B", size=14)
+    # 2. اسم المبرمج: كبير (14) وأغمق لوناً
+    pdf.set_font("Tajawal", "B", size=14)
     pdf.set_text_color(130, 80, 10)
     print_rtl_paragraph(pdf, "تصميم وتطوير المبرمج: محمد النجري", line_height=10, max_chars=55, align='C')
     pdf.ln(5)
 
-    # 3. باقي الصفحة (القصيدة + التحليل): خط غامق (B) بحجم 12 ولون أسود فحمي واضح
-    pdf.set_font("GoogleArabic", "B", size=12)
-    pdf.set_text_color(20, 20, 20)
+    # 3. باقي الصفحة: خط تجول الغامق (B) بحجم 12 ولون أسود فحمي مريح
+    pdf.set_font("Tajawal", "B", size=12)
+    pdf.set_text_color(25, 25, 25)
     raw_all = poem_text + "\n\n" + report_text
     no_tashkeel = re.sub(r'[\u064B-\u065F\u0670]', '', raw_all)
-    
-    print_rtl_paragraph(pdf, no_tashkeel, line_height=8.5, max_chars=72, align='R')
+
+    print_rtl_paragraph(pdf, no_tashkeel, line_height=8.5, max_chars=75, align='R')
 
     return bytes(pdf.output())
 
