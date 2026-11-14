@@ -334,7 +334,7 @@ if GEMINI_API_KEY:
             if final_report:
                     st.session_state["saved_report"] = final_report
                     st.session_state["saved_poem"] = user_prompt
-                else:
+            else:
                     st.info("⏳ خوادم جوجل تشهد ضغطاً لحظياً، يرجى الضغط على الزر مرة أخرى بعد قليل.")
 
     if "saved_report" in st.session_state and st.session_state["saved_report"]:
