@@ -10,5 +10,6 @@ matplotlib
 mishkal
 pyarabic
 pandas
+uharfbuzz
 
 
