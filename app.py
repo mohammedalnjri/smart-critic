@@ -93,7 +93,8 @@ def create_arabic_pdf(report_text, poem_text=""):
     # 3. طباعة الأبيات بالتشكيل الكامل باللون الكحلي المميز
     pdf.set_font("Almarai", "B", size=12)
     pdf.set_text_color(15, 50, 100)
-    clean_poem_for_pdf = poem_text.replace("بيت شعري واحد مكون من شطرين:\n", "")
+    clean_poem_for_pdf = re.sub(r'[\u064B-\u065F\u0670]', '', poem_text.replace("بيت شعري واحد مكون من شطرين:\n", ""))
+
     print_rtl_paragraph(pdf, clean_poem_for_pdf, line_height=9.5, max_chars=75, align='R')
     pdf.ln(5)
 
