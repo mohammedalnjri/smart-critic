@@ -357,7 +357,7 @@ if GEMINI_API_KEY:
 """
 
 
-     with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
+    with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
             final_report = ""
             last_error = ""
             api_keys = [st.secrets[k] for k in ["GEMINI_API_KEY", "GEMINI_API_KEY_2"] if k in st.secrets]
