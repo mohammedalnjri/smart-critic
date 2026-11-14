@@ -43,40 +43,66 @@ st.subheader("التحليل الأدبي والعروضي الصارم بأحد
 # ==========================================
 # دالة إنشاء ملف PDF عربي منسق (نفس دالتك الأصلية)
 # ========================================== 
-def shape_arabic(text):
-    return get_display(arabic_reshaper.reshape(text))
+import textwrap
+import arabic_reshaper
+from bidi.algorithm import get_display
 
-def create_arabic_pdf(report_text, poem_text):
-    
+# تهيئة المرسام العربي لمنع اختفاء حرف الألف وضبط الاتصال
+reshaper = arabic_reshaper.ArabicReshaper(
+    configuration={
+        'delete_harakat': False,
+        'support_ligatures': False,
+    }
+)
+
+def shape_arabic(text):
+    if not text:
+        return ""
+    reshaped_text = reshaper.reshape(text)
+    return get_display(reshaped_text)
+
+def print_rtl_paragraph(pdf, text, line_height=8.5, max_chars=72, align='R'):
+    for paragraph in text.split('\n'):
+        clean_para = paragraph.strip()
+        if not clean_para or clean_para == "---":
+            if clean_para == "---":
+                pdf.ln(3)
+            continue
+        lines = textwrap.wrap(clean_para, width=max_chars)
+        for line in lines:
+            pdf.set_x(12)
+            pdf.cell(186, line_height, shape_arabic(line), ln=True, align=align)
+
+def create_arabic_pdf(report_text, poem_text=""):
     pdf = FPDF()
     pdf.set_margins(12, 12, 12)
     pdf.add_page()
-    
+
+    # تحميل خط Cairo العادي والعريض
     pdf.add_font("GoogleArabic", "", "Cairo-Regular.ttf", uni=True)
     pdf.add_font("GoogleArabic", "B", "Cairo-Bold.ttf", uni=True)
 
-    
-    pdf.set_font("GoogleArabic", size=19)
-    pdf.set_text_color(20, 80, 160)
-    pdf.set_x(12)
-    pdf.multi_cell(186, 11, shape_arabic("منصة الناقد الذكي للتحليل الأدبي والعروضي"), align="C")
-    
-    pdf.set_font("GoogleArabic", size=13)
-    pdf.set_text_color(165, 105, 15)
-    pdf.set_x(12)
-    pdf.multi_cell(186, 9, shape_arabic("تصميم وتطوير المبرمج: محمد النجري"), align="C")
-    pdf.ln(6)
-    
-    pdf.set_font("GoogleArabic", size=12)
-    pdf.set_text_color(25, 25, 25)
+    # 1. العنوان الرئيسي: أكبر (21) وأغمق لوناً (أزرق كحلي داكن) مع خط عريض B
+    pdf.set_font("GoogleArabic", "B", size=21)
+    pdf.set_text_color(10, 45, 110)
+    print_rtl_paragraph(pdf, "منصة الناقد الذكي للتحليل الأدبي والعروضي", line_height=12, max_chars=45, align='C')
+
+    # 2. اسم المبرمج: كبير (14) وأغمق لوناً (ذهبي/بني داكن) مع خط عريض B
+    pdf.set_font("GoogleArabic", "B", size=14)
+    pdf.set_text_color(130, 80, 10)
+    print_rtl_paragraph(pdf, "تصميم وتطوير المبرمج: محمد النجري", line_height=10, max_chars=55, align='C')
+    pdf.ln(5)
+
+    # 3. باقي الصفحة (القصيدة + التحليل): خط غامق (B) بحجم 12 ولون أسود فحمي واضح
+    pdf.set_font("GoogleArabic", "B", size=12)
+    pdf.set_text_color(20, 20, 20)
     raw_all = poem_text + "\n\n" + report_text
-    no_tashkeel = re.sub(r'[\u064B-\u065F\u0670*#`/0]', '', raw_all)
-    for line in no_tashkeel.split('\n'):
-        stripped = line.strip()
-        if stripped and stripped != "التقطيع الصوتي بالرموز:":
-            pdf.set_x(12)
-            pdf.multi_cell(186, 8.5, shape_arabic(stripped), align="R")
+    no_tashkeel = re.sub(r'[\u064B-\u065F\u0670]', '', raw_all)
+    
+    print_rtl_paragraph(pdf, no_tashkeel, line_height=8.5, max_chars=72, align='R')
+
     return bytes(pdf.output())
+
 
 # ==========================================
 # محرك التحليل العروضي الرياضي المصحح (يدعم 1000+ بيت)
