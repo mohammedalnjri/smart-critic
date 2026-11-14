@@ -358,27 +358,35 @@ if GEMINI_API_KEY:
 
 
 
-        with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
-            final_report = ""
-            available = [m.name.replace("models/", "") for m in client.models.list() if "gemini" in m.name]
-            preferred = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-1.5-flash"]
-            valid_models = [m for m in preferred if m in available] + [m for m in available if "flash" in m and m not in preferred]
+        @st.cache_data(ttl=86400, show_spinner=False)
+        def get_cached_analysis(prompt_text):
+            last_err = ""
+            api_keys = [st.secrets[k] for k in ["GEMINI_API_KEY", "GEMINI_API_KEY_2"] if k in st.secrets]
+            gemini_models = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
 
-            for model_name in valid_models:
-                try:
-                    response = client.models.generate_content(model=model_name, contents=full_prompt)
-                    if response and response.text:
-                        final_report = response.text
-                        break
-                except Exception:
-                    time.sleep(1)
-                    continue
+            for current_key in api_keys:
+                temp_client = genai.Client(api_key=current_key)
+                for m_name in gemini_models:
+                    try:
+                        response = temp_client.models.generate_content(
+                            model=m_name,
+                            contents=prompt_text
+                        )
+                        if response and response.text:
+                            return response.text, ""
+                    except Exception as e:
+                        last_err = str(e)
+                        continue
+            return "", last_err
+
+        with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
+            final_report, last_error = get_cached_analysis(full_prompt)
 
             if final_report:
                 st.session_state["saved_report"] = final_report
                 st.session_state["saved_poem"] = poem_sample
             else:
-                st.warning("⏳ خوادم جوجل تشهد ضغطاً لحظياً، يرجى الضغط على الزر مرة أخرى بعد قليل.")
+                st.warning(f"⏳ تعذر الاتصال بالخوادم حالياً، يرجى المحاولة بعد قليل.\n\nالتفاصيل: {last_error}")
 
     if "saved_report" in st.session_state and st.session_state["saved_report"]:
         st.write("---")
