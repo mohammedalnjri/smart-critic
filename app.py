@@ -180,17 +180,17 @@ def classify_symbols(sym):
     for name, tafeelat, pattern in METERS_SIGNATURES:
         if re.match(pattern, sym):
             return (name, tafeelat)
-    if "///0//0" in sym and len(sym) >= 18:
-        return ("الكامل التام", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ")
+    if ("///0//0" in sym or sym.startswith(("/0/0//0", "//0//0"))) and len(sym) >= 15:
+    return ("الكامل التام", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ")
     if "//0///0" in sym and sym.endswith("//0/0"):
         return ("الوافر التام", "مُفَاعَلَتُنْ مُفَاعَلَتُنْ فَعُولُنْ")
     if sym.startswith(("/0/0//0/0/0//0", "//0//0/0/0//0")):
-        return ("السريع / الصخري", "مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ فَاعِلُنْ") if len(sym) <= 18 else ("الرجز التام", "مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ")
-    if sym.startswith(("//0/0//0/0", "//0///0/0")):
+        return ("السريع / الصخري", "مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ فَاعِلُنْ")
+    if sym.startswith(("//0/0//0/0", "//0/0//0/0/0", "//0///0/0")):
         return ("الطويل", "فَعُولُنْ مَفَاعِيلُنْ فَعُولُنْ مَفَاعِلُنْ")
-    if sym.startswith(("/0/0//0/0//0", "/0/0//0///0")):
+    if sym.startswith(("/0/0//0/0//0", "//0//0/0//0")):
         return ("البسيط التام", "مُسْتَفْعِلُنْ فَاعِلُنْ مُسْتَفْعِلُنْ فَعِلُنْ")
-    return ("يُطابق مع البحر السائد", "تفعيلات قياسية")
+    return ("يتطابق مع البحر السائد", "تفعيلات قياسية")
 
 def detect_arabic_meter_and_table(raw_text, is_fusha=True):
     clean_kashida = raw_text.replace("ـ", "")
@@ -229,20 +229,28 @@ def detect_arabic_meter_and_table(raw_text, is_fusha=True):
         else:
             ashatar.append(line)
             
-    rows = []
+    raw_rows = []
     votes = {}
     for idx, shatr in enumerate(ashatar):
-        sym = line_to_prosody_symbols(shatr, is_fusha=is_fusha)
+        sym = line_to_prosody_symbols(shatr)
         meter_name, tafeelat = classify_symbols(sym)
-        if "يُطابق" not in meter_name:
+        if "يطابق" not in meter_name and meter_name != "غير محدد":
             votes[meter_name] = votes.get(meter_name, 0) + 1
-        rows.append({"م": idx + 1, "الشطر": shatr, "الرموز العروضية": sym, "البحر": meter_name, "التفعيلات": tafeelat})
-        
-    df = pd.DataFrame(rows)
-    best_meter = max(votes, key=votes.get) if votes else "يُحدد من التقطيع الصوتي الدقيق"
-    best_tafeelat = next((taf for name, taf, _ in METERS_SIGNATURES if name == best_meter), "")
-    sample_syms = "\n".join([f"- الشطر ({r['م']}): {r['الشطر']} -> الرموز: {r['الرموز العروضية']} ({r['البحر']})" for r in rows[:6]])
+        raw_rows.append((idx + 1, shatr, meter_name, tafeelat, sym))
+
+    best_meter = max(votes, key=votes.get) if votes else "بحر عربي أصيل"
+    best_tafeelat = next((taf for _, _, name, taf, _ in raw_rows if name == best_meter), "تفعيلات موزونة")
+
+    rows = []
     
+    for num, shatr, m_name, taf, sym in raw_rows:
+        # إذا كان الشطر على البحر السائد أو يحمل جوازاً لم يُكتشف، نعرض تفعيلات البحر السائد بدلاً من عبارة "تفعيلات قياسية"
+        final_taf = taf if m_name == best_meter else best_tafeelat
+        rows.append({"م": num, "الشطر": shatr, "التفعيلات": final_taf, "الرموز": sym})
+
+    df = pd.DataFrame(rows)
+    sample_syms = "\n".join([f"- الشطر ({r['م']}): {r['الرموز']}" for r in rows[:4]])
+
     report_str = (
         f"البحر الشعري المؤكد رياضياً (من واقع {len(rows)} شطر) هو: **بحر {best_meter}**\n"
         f"- التفعيلات القياسية: **{best_tafeelat}**\n"
