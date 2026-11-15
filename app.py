@@ -370,7 +370,7 @@ if GEMINI_API_KEY:
                 temp_client = genai.Client(api_key=current_key)
                 for m_name in gemini_models:
                     try:
-                        response = temp_client.models.generate_content(model=m_name, contents=full_prompt)
+                        response = temp_client.models.generate_content(model=m_name, contents=prompt_to_send)
                         if response and response.text:
                             final_report = response.text
                             break
