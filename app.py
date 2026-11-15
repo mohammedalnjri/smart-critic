@@ -361,8 +361,8 @@ if GEMINI_API_KEY:
             final_report = ""
             last_error = ""
             prompt_to_send = full_prompt if "full_prompt" in locals() else f"حلّل النص الشعري التالي تحليلاً عروضياً وبلاغياً دقيقاً:\n\n{user_prompt}"
-            api_keys = [st.secrets[k] for k in ["GEMINI_API_KEY", "GEMINI_API_KEY_2"] if k in st.secrets]
-            gemini_models = [m.name.replace("models/", "") for m in genai.Client(api_key=api_keys[0]).models.list() if "gemini" in m.name and ("flash" in m.name or "pro" in m.name) and "2.0" not in m.name]
+            gemini_models = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro", "gemini-3-flash-preview"]
+            api_keys = [st.secrets[k] for k in ["GEMINI_API_KEY_2", "GEMINI_API_KEY"] if k in st.secrets]
 
 
             for current_key in api_keys:
