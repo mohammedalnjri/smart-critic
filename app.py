@@ -359,25 +359,26 @@ if GEMINI_API_KEY:
 
         with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
              final_report = ""
-             all_errors = []
 
-             # جلب النماذج المستقرة فقط واستبعاد النماذج التجريبية التي حدها المجاني صفر
+             # جلب نماذج Gemini و Gemma النصية المتاحة كبدائل عند الضغط
              available_models = []
         try:
             for m in client.models.list():
-                if "gemini" in m.name and "flash" in m.name:
-                    clean_name = m.name.replace("models/", "")
-                    excluded = ["audio", "image", "tts", "embedding", "omni", "preview", "exp"]
-                    if not any(x in clean_name for x in excluded):
-                        available_models.append(clean_name)
-        except Exception as list_err:
-            all_errors.append(f"List Error: {list_err}")
+                name = m.name.replace("models/", "")
+                excluded = ["audio", "image", "tts", "embedding", "omni", "preview", "exp", "vision"]
+                if ("gemini" in name or "gemma" in name) and not any(x in name for x in excluded):
+                    available_models.append(name)
+        except Exception:
+            pass
 
-        # ترتيب النماذج من الأحدث إلى الأقدم
-        available_models.sort(reverse=True)
+        # ترتيب: نماذج Flash أولاً، ثم Pro، ثم Gemma كاحتياطي مضمون
+        flash_models = sorted([m for m in available_models if "flash" in m], reverse=True)
+        pro_models = sorted([m for m in available_models if "pro" in m], reverse=True)
+        gemma_models = sorted([m for m in available_models if "gemma" in m], reverse=True)
 
-        # تجربة كل النماذج المستقرة المتاحة حتى ينجح أول نموذج
-        for model_name in available_models:
+        ordered_models = flash_models + pro_models + gemma_models
+
+        for model_name in ordered_models:
             try:
                 response = client.models.generate_content(
                     model=model_name,
@@ -386,9 +387,16 @@ if GEMINI_API_KEY:
                 if response and response.text:
                     final_report = response.text
                     break
-            except Exception as e:
-                all_errors.append(f"{model_name}: {str(e)}")
+            except Exception:
+                time.sleep(0.5)
                 continue
+
+        if final_report:
+            st.session_state["saved_report"] = final_report
+            st.session_state["saved_poem"] = user_prompt
+        else:
+            st.warning("⏳ خوادم جوجل تشهد ضغطاً لحظياً في هذه الساعة، يرجى الضغط على الزر مرة أخرى بعد قليل.")
+
 
         if final_report:
             st.session_state["saved_report"] = final_report
