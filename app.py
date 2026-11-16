@@ -358,12 +358,12 @@ if GEMINI_API_KEY:
 
 
         with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
-        final_report = ""
-        error_details = ""
-        target_models = [
-            "gemini-2.5-flash",
-            "gemini-2.5-flash-lite",
-            "gemini-2.0-flash"
+            final_report = ""
+            error_details = ""
+            target_models = [
+              "gemini-2.5-flash",
+              "gemini-2.5-flash-lite",
+              "gemini-2.0-flash"
         ]
 
         for model_name in target_models:
