@@ -317,19 +317,23 @@ if GEMINI_API_KEY:
                 last_error = ""
                 free_fast_models = ["gemini-3.8-flash", "gemini-3.5-flash-lite"]
 
-                for model_name in free_fast_models:
-                    try:
-                        response = client.models.generate_content(
-                            model=model_name,
-                            contents=full_prompt
-                        )
-                        if response and response.text:
-                            final_report = response.text
-                            break
-                    except Exception as e:
-                        last_error = str(e)
-                        time.sleep(1)
-                        continue
+                for attempt in range(3):
+                    for model_name in free_fast_models:
+                        try:
+                            response = client.models.generate_content(
+                                model=model_name,
+                                contents=full_prompt
+                            )
+                            if response and response.text:
+                                final_report = response.text
+                                break
+                        except Exception as e:
+                            last_error = str(e)
+                            time.sleep(2)
+                            continue
+                    if final_report:
+                        break
+                    time.sleep(3)
 
                 if final_report:
                     st.session_state["saved_report"] = final_report
@@ -337,7 +341,6 @@ if GEMINI_API_KEY:
                 else:
                     st.warning("⏳ خوادم جوجل تشهد ضغطاً لحظياً، يرجى الضغط على الزر مرة أخرى بعد قليل.")
                     st.caption(f"التفاصيل التقنية: {last_error}")
-
     if "saved_report" in st.session_state and st.session_state["saved_report"]:
         st.write("---")
         st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
