@@ -358,27 +358,16 @@ if GEMINI_API_KEY:
 
 
         with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
-             final_report = ""
+            final_report = ""
 
-             # جلب نماذج Gemini و Gemma النصية المتاحة كبدائل عند الضغط
-             available_models = []
-        try:
-            for m in client.models.list():
-                name = m.name.replace("models/", "")
-                excluded = ["audio", "image", "tts", "embedding", "omni", "preview", "exp", "vision"]
-                if ("gemini" in name or "gemma" in name) and not any(x in name for x in excluded):
-                    available_models.append(name)
-        except Exception:
-            pass
+            # 3 نماذج محددة من عائلات خوادم مختلفة لسرعة الاستجابة (أقل من 5 ثوانٍ)
+            fast_fallback_models = [
+              "gemini-3.8-flash",
+              "gemma-3-27b-it",
+              "gemini-3.5-pro"
+        ]
 
-        # ترتيب: نماذج Flash أولاً، ثم Pro، ثم Gemma كاحتياطي مضمون
-        flash_models = sorted([m for m in available_models if "flash" in m], reverse=True)
-        pro_models = sorted([m for m in available_models if "pro" in m], reverse=True)
-        gemma_models = sorted([m for m in available_models if "gemma" in m], reverse=True)
-
-        ordered_models = flash_models + pro_models + gemma_models
-
-        for model_name in ordered_models:
+        for model_name in fast_fallback_models:
             try:
                 response = client.models.generate_content(
                     model=model_name,
@@ -388,8 +377,14 @@ if GEMINI_API_KEY:
                     final_report = response.text
                     break
             except Exception:
-                time.sleep(0.5)
                 continue
+
+        if final_report:
+            st.session_state["saved_report"] = final_report
+            st.session_state["saved_poem"] = user_prompt
+        else:
+            st.warning("⏳ خوادم جوجل تشهد ضغطاً لحظياً في هذه الساعة، يرجى الضغط على الزر مرة أخرى بعد قليل.")
+
 
         if final_report:
             st.session_state["saved_report"] = final_report
