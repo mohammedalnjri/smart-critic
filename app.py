@@ -66,10 +66,8 @@ class StyledPDF(FPDF):
 
 def print_rtl_paragraph(pdf, text, line_height=8.5, max_chars=75, align='R'):
     for paragraph in text.split('\n'):
-        # تجاهل خطوط الفواصل الخاصة بجداول الماركداون مثل |---|---|
         if set(paragraph.strip()) <= {'|', '-', ':', ' '}:
             continue
-        # تنظيف النجوم والهاشتاق وعلامات الجدول لتظهر الجمل نظيفة ومرتبة
         clean_para = paragraph.replace('**', '').replace('###', '').replace('|', ' - ').strip(' -')
         if not clean_para:
             continue
@@ -82,26 +80,24 @@ def create_arabic_pdf(report_text, poem_text=""):
     pdf = StyledPDF()
     pdf.set_margins(12, 12, 12)
     pdf.set_auto_page_break(auto=True, margin=22)
-    # تحميل أوزان خط المراعي (Almarai) قبل إنشاء الصفحة ليستخدمها التذييل
     pdf.add_font("Almarai", "", "Almarai-Regular.ttf")
     pdf.add_font("Almarai", "B", "Almarai-Bold.ttf")
     pdf.add_font("AlmaraiExtra", "B", "Almarai-ExtraBold.ttf")
     pdf.add_page()
-    # تفعيل المحرك العربي المدمج لضمان سلامة الحروف والألفات
     pdf.set_text_shaping(True)
 
-    # 1. العنوان الرئيسي: خط ExtraBold (أغمق وأسمك) وحجم 21 بلون كحلي داكن
+    # 1. العنوان الرئيسي
     pdf.set_font("AlmaraiExtra", "B", size=21)
     pdf.set_text_color(10, 45, 110)
     print_rtl_paragraph(pdf, "منصة الناقد الذكي للتحليل الأدبي والعروضي", line_height=12, max_chars=45, align='C')
 
-    # 2. اسم المبرمج: خط ExtraBold (أغمق وأسمك) وحجم 14 بلون ذهبي داكن
+    # 2. اسم المبرمج
     pdf.set_font("AlmaraiExtra", "B", size=14)
     pdf.set_text_color(130, 80, 10)
     print_rtl_paragraph(pdf, "تصميم وتطوير المبرمج: محمد النجري", line_height=10, max_chars=55, align='C')
     pdf.ln(5)
 
-    # 3. الأبيات الشعرية: خط AlmaraiExtra الغامق بحجم 13 ولون أزرق كحلي ملكي مميز
+    # 3. الأبيات الشعرية بالخط العريض واللون الأزرق الملكي
     if poem_text.strip():
         pdf.set_font("AlmaraiExtra", "B", size=13)
         pdf.set_text_color(10, 55, 130)
@@ -109,7 +105,7 @@ def create_arabic_pdf(report_text, poem_text=""):
         print_rtl_paragraph(pdf, clean_poem, line_height=9.5, max_chars=75, align='R')
         pdf.ln(4)
 
-    # 4. نص التقرير التحليلي: خط Almarai-Bold الغامق بحجم 12 ولون أسود فحمي مريح
+    # 4. نص التقرير التحليلي
     pdf.set_font("Almarai", "B", size=12)
     pdf.set_text_color(25, 25, 25)
     clean_report = re.sub(r'[\u064B-\u065F\u0670]', '', report_text)
@@ -195,7 +191,6 @@ def classify_symbols(sym):
     for name, tafeelat, pattern in METERS_SIGNATURES:
         if re.match(pattern, sym):
             return (name, tafeelat)
-    # مطابقة تقريبية ذكية عند نقص التشكيل الجزئي
     if ("///0//0" in sym or sym.count("/0/0//0") >= 2) and len(sym) >= 16:
         return ("الكامل التام", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ")
     if "//0///0" in sym and (sym.endswith("//0/0") or sym.endswith("//00")):
@@ -220,12 +215,10 @@ def detect_arabic_meter_and_table(raw_text, is_fusha=True):
     if not raw_lines:
         return "", pd.DataFrame()
         
-    # التحقق من نسبة التشكيل في النص الفصيح
     letters_only = re.sub(r'[^\u0621-\u064A]', '', clean_kashida)
     tashkeel_only = re.findall(r'[\u064B-\u0652]', clean_kashida)
     has_enough_tashkeel = (len(letters_only) > 0 and (len(tashkeel_only) / len(letters_only)) >= 0.25)
 
-    # مسار 1: النص الفصيح غير المشكول -> توجيه النموذج للتشكيل الصرفي الدقيق أولاً
     if is_fusha and not has_enough_tashkeel:
         guidance = (
             "تنبيه عروضي صارم: النص المدخل غير مشكول بالحركات. اتبع الخطوات التالية بدقة رياضية:\n"
@@ -241,7 +234,6 @@ def detect_arabic_meter_and_table(raw_text, is_fusha=True):
         )
         return guidance, pd.DataFrame()
 
-    # مسار 2: النص المشكول أو الشعبي/النبطي -> الحساب الرياضي المباشر + الجدول
     ashatar = []
     for line in raw_lines:
         if '=' in line:
@@ -263,7 +255,6 @@ def detect_arabic_meter_and_table(raw_text, is_fusha=True):
     best_meter = max(votes, key=votes.get) if votes else "يُحدد من التقطيع الصوتي الدقيق"
     best_tafeelat = next((taf for name, taf, _ in METERS_SIGNATURES if name == best_meter), "")
 
-    # تعميم البحر السائد وتفعيلاته على الأشطر التي لم تُحسم بسبب نقص التشكيل الجزئي
     if best_meter != "يُحدد من التقطيع الصوتي الدقيق":
         for r in rows:
             if "يُطابق" in r["البحر"]:
@@ -282,7 +273,7 @@ def detect_arabic_meter_and_table(raw_text, is_fusha=True):
     return report_str, df
 
 # ==========================================
-# واجهة التطبيق الرئيسية
+# واجهة التطبيق الرئيسية (مع حماية الحصة اليومية)
 # ==========================================
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
@@ -310,53 +301,55 @@ if GEMINI_API_KEY:
     )
 
     if st.button("🚀 ابدأ النقد الأدبي والعروضي الموثق", use_container_width=True):
-        if not user_prompt.strip():
+        clean_input = user_prompt.strip()
+        if not clean_input:
             st.error("الرجاء كتابة النص الشعري أولاً!")
         else:
             is_fusha = (poem_style == "شعر فصيح (عمودي)")
-            meter_guidance, scansion_df = detect_arabic_meter_and_table(user_prompt, is_fusha)
+            meter_guidance, scansion_df = detect_arabic_meter_and_table(clean_input, is_fusha)
             st.session_state["scansion_df"] = scansion_df
 
-            lines_list = [l.strip() for l in user_prompt.strip().split('\n') if l.strip()]
-            if len(lines_list) == 2:
-                poem_sample = f"بيت شعري واحد مكون من شطرين:\n- الصدر (الشطر الأول): {lines_list[0]}\n- العجز (الشطر الثاني): {lines_list[1]}"
+            # حماية الحصة: إذا تم تحليل نفس النص ونفس النمط مسبقاً، لا تستهلك طلباً جديداً
+            cache_key = f"{poem_style}::{clean_input}"
+            if st.session_state.get("last_cache_key") == cache_key and st.session_state.get("saved_report"):
+                st.info("⚡ تم استرجاع التقرير المحفوظ لهذا النص دون استهلاك رصيد إضافي.")
             else:
-                poem_sample = "\n".join(lines_list)
+                lines_list = [l.strip() for l in clean_input.split('\n') if l.strip()]
+                if len(lines_list) == 2:
+                    poem_sample = f"بيت شعري واحد مكون من شطرين:\n- الصدر (الشطر الأول): {lines_list[0]}\n- العجز (الشطر الثاني): {lines_list[1]}"
+                else:
+                    poem_sample = "\n".join(lines_list)
 
-            full_prompt = f"""أنت عالم عروض وناقد أدبي عربي خبير في منصة "الناقد الذكي".
-بيانات الضبط العروضي الأولية (قد تتأثر بنقص التشكيل، فاعتمد التقطيع الصوتي الصحيح للكلمات):
+                full_prompt = f"""أنت عالم عروض وناقد أدبي عربي خبير في منصة "الناقد الذكي".
+بيانات الضبط العروضي الأولية:
 {meter_guidance}
 
 قواعد عروضية صارمة (ممنوع مخالفتها):
-1. انتبه لعدد الأبيات: كل شطرين (صدر وعجز) يمثلان بيتاً شعرياً واحداً فقط، فلا تصف الشطرين بأنهما "بيتان".
-2. التقطيع الصوتي الصحيح يحدد البحر:
-   - إذا بدأ الشطر بـ (فَعُولُنْ //0/0) ثم (مَفَاعِيلُنْ //0/0/0) فالبحر هو (الطويل) حصراً.
-   - إذا بدأ الشطر بـ (مُسْتَفْعِلُنْ /0/0//0) ثم (فَاعِلُنْ /0//0) فالبحر هو (البسيط) حصراً.
-   - إذا بدأ الشطر بـ (مُتَفَاعِلُنْ ///0//0 أو //0//0) فالبحر هو (الكامل) حصراً.
-   - إذا بدأ الشطر بـ (مُفَاعَلَتُنْ //0///0 أو //0/0/0) فالبحر هو (الوافر) حصراً.
-3. تذكر جوازات البحور ولا تعتبرها كسراً أبداً (مثل القبض والخبن والإضمار والقطع).
-4. لا تتهم أي شطر بالميل إلى بحر آخر أو وجود خلل وزني ما دامت تفعيلاته مطابقة لتفعيلات البحر الأساسي للقصيدة وجوازاته المعروفة؛ ولا تذكر تنبيهات عروضية إلا عند وجود كسر وزني حقيقي لا يقبله أي جواز.
-5. لا تخترع تفعيلات غير متطابقة مع الرموز الصوتية، ولا تستخدم جداول markdown.
+1. انتبه لعدد الأبيات: كل شطرين (صدر وعجز) يمثلان بيتاً شعرياً واحداً فقط.
+2. التقطيع الصوتي الصحيح يحدد البحر: الطويل (فَعُولُنْ مَفَاعِيلُنْ)، البسيط (مُسْتَفْعِلُنْ فَاعِلُنْ)، الكامل (مُتَفَاعِلُنْ)، الوافر (مُفَاعَلَتُنْ).
+3. تذكر جوازات البحور ولا تعتبرها كسراً أبداً.
+4. لا تتهم أي شطر بالميل إلى بحر آخر ما دامت تفعيلاته مطابقة لتفعيلات البحر الأساسي وجوازاته؛ ولا تذكر تنبيهات عروضية إلا عند وجود كسر وزني حقيقي.
+5. لا تستخدم جداول markdown.
 
 النص الشعري المراد تحليله:
 {poem_sample}
 
 مراجع إضافية:
-{context_content[:3000]}
+{context_content[:2000]}
 
-قدّم التقرير في 4 أقسام منظمة:
+قدّم التقرير في 4 أقسام منظمة وموجزة بتركيز علمي عالٍ:
 ### أولاً: التوثيق التاريخي والأدبي
 ### ثانياً: الشرح اللغوي والدلالي
-### ثالثاً: التحليل العروضي والإيقاع الموسيقي (الكتابة العروضية، وتوزيع الكلمات على التفعيلات، والبحر، والقافية والروي)
+### ثالثاً: التحليل العروضي والإيقاع الموسيقي (الكتابة العروضية، التفعيلات، البحر، القافية والروي)
 ### رابعاً: التحليل البلاغي والجمالي
 """
 
-            with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
-                final_report = ""
-                last_error = ""
-                free_fast_models = ["gemini-3.5-flash-lite", "gemini-3.8-flash"]
+                with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
+                    final_report = ""
+                    last_error = ""
+                    # محاولة واحدة لكل موديل بدون حلقات تكرار لحماية الحصة اليومية
+                    free_fast_models = ["gemini-3.5-flash-lite", "gemini-3.8-flash"]
 
-                for attempt in range(2):
                     for model_name in free_fast_models:
                         try:
                             response = client.models.generate_content(
@@ -368,18 +361,21 @@ if GEMINI_API_KEY:
                                 break
                         except Exception as e:
                             last_error = str(e)
-                            time.sleep(0.5)
+                            # التوقف فوراً عند خطأ نفاد الحصة 429 وعدم استهلاك الموديل الثاني
+                            if "429" in last_error or "RESOURCE_EXHAUSTED" in last_error:
+                                break
                             continue
-                    if final_report:
-                        break
-                    time.sleep(1)
 
-                if final_report:
-                    st.session_state["saved_report"] = final_report
-                    st.session_state["saved_poem"] = user_prompt.strip()
-                else:
-                    st.warning("⏳ خوادم جوجل تشهد ضغطاً لحظياً، يرجى الضغط على الزر مرة أخرى بعد قليل.")
-                    st.caption(f"التفاصيل التقنية: {last_error}")
+                    if final_report:
+                        st.session_state["saved_report"] = final_report
+                        st.session_state["saved_poem"] = clean_input
+                        st.session_state["last_cache_key"] = cache_key
+                    else:
+                        if "429" in last_error or "RESOURCE_EXHAUSTED" in last_error:
+                            st.warning("⚠️ تم استهلاك الحد اليومي المجاني لمفتاح API الحالي. يرجى المحاولة لاحقاً أو تحديث المفتاح.")
+                        else:
+                            st.warning("⏳ خوادم جوجل تشهد ضغطاً لحظياً، يرجى الضغط على الزر مرة أخرى بعد قليل.")
+                        st.caption(f"التفاصيل التقنية: {last_error}")
 
     if "saved_report" in st.session_state and st.session_state["saved_report"]:
         st.write("---")
