@@ -85,12 +85,19 @@ def create_arabic_pdf(report_text, poem_text=""):
     print_rtl_paragraph(pdf, "تصميم وتطوير المبرمج: محمد النجري", line_height=10, max_chars=55, align='C')
     pdf.ln(5)
 
-    # 3. باقي الصفحة: خط Almarai-Bold الغامق بحجم 12 ولون أسود فحمي مريح
+    # 3. الأبيات الشعرية: خط AlmaraiExtra الغامق بحجم 13 ولون أزرق كحلي ملكي مميز
+    if poem_text.strip():
+        pdf.set_font("AlmaraiExtra", "B", size=13)
+        pdf.set_text_color(10, 55, 130)
+        clean_poem = re.sub(r'[\u064B-\u065F\u0670]', '', poem_text)
+        print_rtl_paragraph(pdf, clean_poem, line_height=9.5, max_chars=75, align='R')
+        pdf.ln(4)
+
+    # 4. نص التقرير التحليلي: خط Almarai-Bold الغامق بحجم 12 ولون أسود فحمي مريح
     pdf.set_font("Almarai", "B", size=12)
     pdf.set_text_color(25, 25, 25)
-    raw_all = poem_text + "\n\n" + report_text
-    no_tashkeel = re.sub(r'[\u064B-\u065F\u0670]', '', raw_all)
-    print_rtl_paragraph(pdf, no_tashkeel, line_height=8.5, max_chars=75, align='R')
+    clean_report = re.sub(r'[\u064B-\u065F\u0670]', '', report_text)
+    print_rtl_paragraph(pdf, clean_report, line_height=8.5, max_chars=75, align='R')
     return bytes(pdf.output())
 
 # ==========================================
@@ -337,10 +344,11 @@ if GEMINI_API_KEY:
 
                 if final_report:
                     st.session_state["saved_report"] = final_report
-                    st.session_state["saved_poem"] = poem_sample
+                    st.session_state["saved_poem"] = user_prompt.strip()
                 else:
                     st.warning("⏳ خوادم جوجل تشهد ضغطاً لحظياً، يرجى الضغط على الزر مرة أخرى بعد قليل.")
                     st.caption(f"التفاصيل التقنية: {last_error}")
+
     if "saved_report" in st.session_state and st.session_state["saved_report"]:
         st.write("---")
         st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
