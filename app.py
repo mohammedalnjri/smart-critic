@@ -326,17 +326,21 @@ if GEMINI_API_KEY:
 
         with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
             final_report = ""
-            available = [m.name.replace("models/", "") for m in client.models.list() if "gemini" in m.name]
-            preferred = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-1.5-flash"]
-            valid_models = [m for m in preferred if m in available] + [m for m in available if "flash" in m and m not in preferred]
+            last_error = ""
+            # الاقتصار على موديلات Flash المجانية السريعة وتجنب استدعاء list()
+            free_fast_models = ["gemini-2.5-flash", "gemini-2.5-flash-lite"]
 
-            for model_name in valid_models:
+            for model_name in free_fast_models:
                 try:
-                    response = client.models.generate_content(model=model_name, contents=full_prompt)
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=full_prompt
+                    )
                     if response and response.text:
                         final_report = response.text
                         break
-                except Exception:
+                except Exception as e:
+                    last_error = str(e)
                     time.sleep(1)
                     continue
 
@@ -345,7 +349,7 @@ if GEMINI_API_KEY:
                 st.session_state["saved_poem"] = poem_sample
             else:
                 st.warning("⏳ خوادم جوجل تشهد ضغطاً لحظياً، يرجى الضغط على الزر مرة أخرى بعد قليل.")
-
+                st.caption(f"التفاصيل التقنية: {last_error}")
     if "saved_report" in st.session_state and st.session_state["saved_report"]:
         st.write("---")
         st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
