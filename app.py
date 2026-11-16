@@ -358,12 +358,11 @@ if GEMINI_API_KEY:
 
 
         with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
-            
-        final_report = ""
-        all_errors = []
+             final_report = ""
+             all_errors = []
 
-        # جلب النماذج المتاحة في حسابك والتي تدعم توليد النصوص فقط
-        available_models = []
+             # جلب النماذج المتاحة في حسابك والتي تدعم توليد النصوص فقط
+             available_models = []
         try:
             for m in client.models.list():
                 if "gemini" in m.name and "flash" in m.name:
@@ -392,6 +391,7 @@ if GEMINI_API_KEY:
                 time.sleep(1)
                 continue
 
+            
         if final_report:
             st.session_state["saved_report"] = final_report
             st.session_state["saved_poem"] = user_prompt
