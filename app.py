@@ -366,7 +366,7 @@ if GEMINI_API_KEY:
             "gemini-3.0-flash"
         ]
 
-        ]
+        
 
         for model_name in target_models:
             try:
