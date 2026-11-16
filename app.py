@@ -107,7 +107,7 @@ def create_arabic_pdf(report_text, poem_text=""):
 
     # 4. نص التقرير التحليلي
     pdf.set_font("Almarai", "B", size=12)
-    pdf.set_text_color(25, 25, 25)
+    pdf.set_text_color(10, 10, 10)
     clean_report = re.sub(r'[\u064B-\u065F\u0670]', '', report_text)
     print_rtl_paragraph(pdf, clean_report, line_height=8.5, max_chars=75, align='R')
     return bytes(pdf.output())
