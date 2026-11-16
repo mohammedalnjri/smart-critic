@@ -315,7 +315,7 @@ if GEMINI_API_KEY:
             with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
                 final_report = ""
                 last_error = ""
-                free_fast_models = ["gemini-3.8-flash", "gemini-3.5-flash-lite"]
+                free_fast_models = ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemma-3-27b-it"]
 
                 for attempt in range(3):
                     for model_name in free_fast_models:
