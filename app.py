@@ -358,17 +358,27 @@ if GEMINI_API_KEY:
 
 
         with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
-            final_report = ""
-            error_details = ""
-            target_models = [
-            "gemini-3.8-flash",
-            "gemini-3.8-flash-lite",
-            "gemini-3.0-flash"
-        ]
+            
+        final_report = ""
+        all_errors = []
 
-        
+        # جلب النماذج المتاحة في حسابك والتي تدعم توليد النصوص فقط
+        available_models = []
+        try:
+            for m in client.models.list():
+                if "gemini" in m.name and "flash" in m.name:
+                    clean_name = m.name.replace("models/", "")
+                    # استبعاد النماذج المخصصة للصوت أو الصور أو التضمين
+                    if not any(x in clean_name for x in ["audio", "image", "tts", "embedding"]):
+                        available_models.append(clean_name)
+        except Exception as list_err:
+            all_errors.append(f"List Error: {list_err}")
 
-        for model_name in target_models:
+        # ترتيب النماذج من الأحدث إلى الأقدم
+        available_models.sort(reverse=True)
+
+        # تجربة أول 3 نماذج متاحة فعلياً
+        for model_name in available_models[:3]:
             try:
                 response = client.models.generate_content(
                     model=model_name,
@@ -378,8 +388,8 @@ if GEMINI_API_KEY:
                     final_report = response.text
                     break
             except Exception as e:
-                error_details = str(e)
-                time.sleep(2)
+                all_errors.append(f"{model_name}: {str(e)}")
+                time.sleep(1)
                 continue
 
         if final_report:
@@ -387,9 +397,8 @@ if GEMINI_API_KEY:
             st.session_state["saved_poem"] = user_prompt
         else:
             st.warning("⏳ تعذر إتمام التحليل حالياً، يرجى المحاولة بعد قليل.")
-            st.error(f"تفاصيل الخطأ التقني: {error_details}")
+            st.error("تفاصيل الأخطاء:\n" + "\n\n".join(all_errors))
 
-            
     if "saved_report" in st.session_state and st.session_state["saved_report"]:
         st.write("---")
         st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
