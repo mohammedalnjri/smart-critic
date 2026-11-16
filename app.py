@@ -42,12 +42,27 @@ st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; mar
 st.subheader("التحليل الأدبي والعروضي الصارم بأحدث التقنيات البرمجية")
 
 # ==========================================
-# دالة إنشاء ملف PDF عربي منسق
+# دالة إنشاء ملف PDF عربي منسق مع تذييل تلقائي
 # ==========================================
 class StyledPDF(FPDF):
     def header(self):
         self.set_fill_color(250, 248, 244)
         self.rect(0, 0, 210, 297, 'F')
+
+    def footer(self):
+        self.set_y(-15)
+        self.set_draw_color(180, 150, 90)
+        self.line(12, 280, 198, 280)
+        self.set_font("Almarai", "B", size=10)
+        self.set_text_color(20, 90, 200)
+        self.set_x(12)
+        self.cell(
+            186,
+            8,
+            f"المدونة الأدبية للمبرمج محمد النجري: mohammedalnjri.blogspot.com  |  صفحة {self.page_no()}",
+            align='C',
+            link="https://mohammedalnjri.blogspot.com"
+        )
 
 def print_rtl_paragraph(pdf, text, line_height=8.5, max_chars=75, align='R'):
     for paragraph in text.split('\n'):
@@ -66,13 +81,14 @@ def print_rtl_paragraph(pdf, text, line_height=8.5, max_chars=75, align='R'):
 def create_arabic_pdf(report_text, poem_text=""):
     pdf = StyledPDF()
     pdf.set_margins(12, 12, 12)
-    pdf.add_page()
-    # تفعيل المحرك العربي المدمج لضمان سلامة الحروف والألفات
-    pdf.set_text_shaping(True)
-    # تحميل أوزان خط المراعي (Almarai) المطابق لمدونة بلوجر
+    pdf.set_auto_page_break(auto=True, margin=22)
+    # تحميل أوزان خط المراعي (Almarai) قبل إنشاء الصفحة ليستخدمها التذييل
     pdf.add_font("Almarai", "", "Almarai-Regular.ttf")
     pdf.add_font("Almarai", "B", "Almarai-Bold.ttf")
     pdf.add_font("AlmaraiExtra", "B", "Almarai-ExtraBold.ttf")
+    pdf.add_page()
+    # تفعيل المحرك العربي المدمج لضمان سلامة الحروف والألفات
+    pdf.set_text_shaping(True)
 
     # 1. العنوان الرئيسي: خط ExtraBold (أغمق وأسمك) وحجم 21 بلون كحلي داكن
     pdf.set_font("AlmaraiExtra", "B", size=21)
