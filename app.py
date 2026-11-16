@@ -105,11 +105,11 @@ def create_arabic_pdf(report_text, poem_text=""):
         print_rtl_paragraph(pdf, clean_poem, line_height=9.5, max_chars=75, align='R')
         pdf.ln(4)
 
-    # 4. نص التقرير التحليلي
-    pdf.set_font("Almarai", "B", size=12)
-    pdf.set_text_color(10, 10, 10)
+    # 4. نص التقرير التحليلي: أسود حالك الصوان (0,0,0) وخط ExtraBold سميك جداً وواضح
+    pdf.set_font("AlmaraiExtra", "B", size=12.5)
+    pdf.set_text_color(0, 0, 0)
     clean_report = re.sub(r'[\u064B-\u065F\u0670]', '', report_text)
-    print_rtl_paragraph(pdf, clean_report, line_height=8.5, max_chars=75, align='R')
+    print_rtl_paragraph(pdf, clean_report, line_height=9.0, max_chars=75, align='R')
     return bytes(pdf.output())
 
 # ==========================================
@@ -219,7 +219,6 @@ def detect_arabic_meter_and_table(raw_text, is_fusha=True):
     best_meter = max(votes, key=votes.get) if votes else "الكامل التام"
     best_tafeelat = next((taf for name, taf, _ in METERS_SIGNATURES if name == best_meter), "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ")
 
-    # وراثة البحر السائد للأشطر غير المحسومة بسبب نقص التشكيل
     for r in rows:
         if "يُطابق" in r["البحر"] or "غير محدد" in r["البحر"]:
             r["البحر"] = f"{best_meter} (موزون)"
@@ -261,7 +260,7 @@ if GEMINI_API_KEY:
     poem_style = st.radio("اختر نمط القصيدة:", ["شعر فصيح (عمودي)", "شعر شعبي / نبطي / يمني"], horizontal=True)
     user_prompt = st.text_area(
         "💡 أدخل البيت الشعري في سطرين متتاليين (الصدر ثم العجز)، أو الصق قصيدتك كاملة في المربع أدناه:",
-        value="فَتَاةٌ مَاس جِيـــدٌ كالغَزَال\nرَنَت وتَربَّعت عَرش الدَّلَال"
+        value=""
     )
 
     if st.button("🚀 ابدأ النقد الأدبي والعروضي الموثق", use_container_width=True):
