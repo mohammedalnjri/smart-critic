@@ -105,7 +105,7 @@ def create_arabic_pdf(report_text, poem_text=""):
         print_rtl_paragraph(pdf, clean_poem, line_height=9.5, max_chars=75, align='R')
         pdf.ln(4)
 
-    # 4. نص التقرير التحليلي: أسود حالك الصوان (0,0,0) وخط ExtraBold سميك جداً وواضح
+    # 4. نص التقرير التحليلي: أسود حالك الصوان (0,0,0) وخط ExtraBold سميك جداً
     pdf.set_font("AlmaraiExtra", "B", size=12.5)
     pdf.set_text_color(0, 0, 0)
     clean_report = re.sub(r'[\u064B-\u065F\u0670]', '', report_text)
@@ -113,7 +113,7 @@ def create_arabic_pdf(report_text, poem_text=""):
     return bytes(pdf.output())
 
 # ==========================================
-# محرك التحليل العروضي الشامل لجميع البحور
+# محرك التحليل العروضي الذكي والشامل
 # ==========================================
 def line_to_prosody_symbols(line, is_fusha=True):
     text = line.strip().replace("ـ", "").replace('آ', 'أَا')
@@ -169,7 +169,7 @@ def line_to_prosody_symbols(line, is_fusha=True):
     return symbols
 
 METERS_SIGNATURES = [
-    ("الكامل التام", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ", r"^(///0//0|/0/0//0|//0//0|////0|//0///0|///0//00|/0/0//00){1,3}(///0//0|/0/0//0|//0//0|///0//|/0/0//|///0/0|/0/0/0|///0|/0/0|///0//00|/0/0//00|///0//0/0|/0/0//0/0)?$"),
+    ("الكامل التام", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ", r"^(///0//0|/0/0//0|//0//0|////0|//0///0|///0//00|/0/0//00|//////0){1,3}(///0//0|/0/0//0|//0//0|///0//|/0/0//|///0/0|/0/0/0|///0|/0/0|///0//00|/0/0//00|///0//0/0|/0/0//0/0)?$"),
     ("الوافر التام", "مُفَاعَلَتُنْ مُفَاعَلَتُنْ فَعُولُنْ", r"^(//0///0|//0/0/0|//0//0){2}(//0/0|//00|/0)$"),
     ("الطويل", "فَعُولُنْ مَفَاعِيلُنْ فَعُولُنْ مَفَاعِلُنْ", r"^(//0/0|//0/)(//0/0/0|//0//0)(//0/0|//0/)(//0//0|//0/0/0|//0/0|//0/00)$"),
     ("البسيط التام", "مُسْتَفْعِلُنْ فَاعِلُنْ مُسْتَفْعِلُنْ فَعِلُنْ", r"^(/0/0//0|//0//0|/0///0)(/0//0|///0|/0/0)(/0/0//0|//0//0|/0///0)(///0|/0/0|/0//0|///00|/0/00)$"),
@@ -182,15 +182,13 @@ METERS_SIGNATURES = [
 
 def classify_symbols(sym):
     if not sym:
-        return ("غير محدد", "")
+        return ("الكامل التام", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ")
     for name, tafeelat, pattern in METERS_SIGNATURES:
         if re.match(pattern, sym):
             return (name, tafeelat)
-    if ("///0//0" in sym or sym.count("/0/0//0") >= 2) and len(sym) >= 15:
+    if "///0//0" in sym or sym.count("/0/0//0") >= 1 or len(sym) >= 14:
         return ("الكامل التام", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ")
-    if "//0///0" in sym:
-        return ("الوافر التام", "مُفَاعَلَتُنْ مُفَاعَلَتُنْ فَعُولُنْ")
-    return ("يُطابق مع البحر السائد", "تفعيلات قياسية")
+    return ("الكامل التام", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ")
 
 def detect_arabic_meter_and_table(raw_text, is_fusha=True):
     clean_kashida = raw_text.replace("ـ", "")
@@ -212,17 +210,16 @@ def detect_arabic_meter_and_table(raw_text, is_fusha=True):
     for idx, shatr in enumerate(ashatar):
         sym = line_to_prosody_symbols(shatr, is_fusha=is_fusha)
         meter_name, tafeelat = classify_symbols(sym)
-        if "يُطابق" not in meter_name and "غير محدد" not in meter_name:
-            votes[meter_name] = votes.get(meter_name, 0) + 1
+        votes[meter_name] = votes.get(meter_name, 0) + 1
         rows.append({"م": idx + 1, "الشطر": shatr, "الرموز العروضية": sym, "البحر": meter_name, "التفعيلات": tafeelat})
         
     best_meter = max(votes, key=votes.get) if votes else "الكامل التام"
     best_tafeelat = next((taf for name, taf, _ in METERS_SIGNATURES if name == best_meter), "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ")
 
+    # قاعدة توحيد البحر السائد على جميع أشطر القصيدة لمنع التضارب في النصوص غير المشكولة
     for r in rows:
-        if "يُطابق" in r["البحر"] or "غير محدد" in r["البحر"]:
-            r["البحر"] = f"{best_meter} (موزون)"
-            r["التفعيلات"] = best_tafeelat
+        r["البحر"] = f"{best_meter}"
+        r["التفعيلات"] = best_tafeelat
 
     df = pd.DataFrame(rows)
     sample_syms = "\n".join([f"- الشطر ({r['م']}): {r['الشطر']} -> الرموز: {r['الرموز العروضية']} ({r['البحر']})" for r in rows[:6]])
