@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import re
 import time
+import textwrap
 import pandas as pd
 from google import genai
 from fpdf import FPDF
@@ -41,12 +42,8 @@ st.markdown("<p style='font-size: 1.2rem; color: #4A90E2; font-weight: bold; mar
 st.subheader("التحليل الأدبي والعروضي الصارم بأحدث التقنيات البرمجية")
 
 # ==========================================
-# دالة إنشاء ملف PDF عربي منسق (نفس دالتك الأصلية)
-# ========================================== 
-import textwrap
-import re
-
-# تلوين خلفية كل صفحة تلقائياً بنفس اللون العاجي الدافئ لمدونتك
+# دالة إنشاء ملف PDF عربي منسق
+# ==========================================
 class StyledPDF(FPDF):
     def header(self):
         self.set_fill_color(250, 248, 244)
@@ -70,10 +67,8 @@ def create_arabic_pdf(report_text, poem_text=""):
     pdf = StyledPDF()
     pdf.set_margins(12, 12, 12)
     pdf.add_page()
-
     # تفعيل المحرك العربي المدمج لضمان سلامة الحروف والألفات
     pdf.set_text_shaping(True)
-
     # تحميل أوزان خط المراعي (Almarai) المطابق لمدونة بلوجر
     pdf.add_font("Almarai", "", "Almarai-Regular.ttf")
     pdf.add_font("Almarai", "B", "Almarai-Bold.ttf")
@@ -95,12 +90,8 @@ def create_arabic_pdf(report_text, poem_text=""):
     pdf.set_text_color(25, 25, 25)
     raw_all = poem_text + "\n\n" + report_text
     no_tashkeel = re.sub(r'[\u064B-\u065F\u0670]', '', raw_all)
-
     print_rtl_paragraph(pdf, no_tashkeel, line_height=8.5, max_chars=75, align='R')
-
     return bytes(pdf.output())
-
-
 
 # ==========================================
 # محرك التحليل العروضي الرياضي المصحح (يدعم 1000+ بيت)
@@ -251,9 +242,8 @@ def detect_arabic_meter_and_table(raw_text, is_fusha=True):
     )
     return report_str, df
 
-
 # ==========================================
-# واجهة التطبيق الرئيسية (نفس كودك الأصلي السريع)
+# واجهة التطبيق الرئيسية
 # ==========================================
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
@@ -288,11 +278,11 @@ if GEMINI_API_KEY:
             meter_guidance, scansion_df = detect_arabic_meter_and_table(user_prompt, is_fusha)
             st.session_state["scansion_df"] = scansion_df
 
-        lines_list = [l.strip() for l in user_prompt.strip().split('\n') if l.strip()]
-        if len(lines_list) == 2:
-            poem_sample = f"بيت شعري واحد مكون من شطرين:\n- الصدر (الشطر الأول): {lines_list[0]}\n- العجز (الشطر الثاني): {lines_list[1]}"
-        else:
-            poem_sample = "\n".join(lines_list)
+            lines_list = [l.strip() for l in user_prompt.strip().split('\n') if l.strip()]
+            if len(lines_list) == 2:
+                poem_sample = f"بيت شعري واحد مكون من شطرين:\n- الصدر (الشطر الأول): {lines_list[0]}\n- العجز (الشطر الثاني): {lines_list[1]}"
+            else:
+                poem_sample = "\n".join(lines_list)
 
             full_prompt = f"""أنت عالم عروض وناقد أدبي عربي خبير في منصة "الناقد الذكي".
 بيانات الضبط العروضي الأولية (قد تتأثر بنقص التشكيل، فاعتمد التقطيع الصوتي الصحيح للكلمات):
@@ -322,38 +312,37 @@ if GEMINI_API_KEY:
 ### رابعاً: التحليل البلاغي والجمالي
 """
 
+            with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
+                final_report = ""
+                last_error = ""
+                free_fast_models = ["gemini-2.5-flash", "gemini-2.5-flash-lite"]
 
+                for model_name in free_fast_models:
+                    try:
+                        response = client.models.generate_content(
+                            model=model_name,
+                            contents=full_prompt
+                        )
+                        if response and response.text:
+                            final_report = response.text
+                            break
+                    except Exception as e:
+                        last_error = str(e)
+                        time.sleep(1)
+                        continue
 
-        with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
-            final_report = ""
-            last_error = ""
-            # الاقتصار على موديلات Flash المجانية السريعة وتجنب استدعاء list()
-            free_fast_models = ["gemini-2.5-flash", "gemini-2.5-flash-lite"]
+                if final_report:
+                    st.session_state["saved_report"] = final_report
+                    st.session_state["saved_poem"] = poem_sample
+                else:
+                    st.warning("⏳ خوادم جوجل تشهد ضغطاً لحظياً، يرجى الضغط على الزر مرة أخرى بعد قليل.")
+                    st.caption(f"التفاصيل التقنية: {last_error}")
 
-            for model_name in free_fast_models:
-                try:
-                    response = client.models.generate_content(
-                        model=model_name,
-                        contents=full_prompt
-                    )
-                    if response and response.text:
-                        final_report = response.text
-                        break
-                except Exception as e:
-                    last_error = str(e)
-                    time.sleep(1)
-                    continue
-
-            if final_report:
-                st.session_state["saved_report"] = final_report
-                st.session_state["saved_poem"] = poem_sample
-            else:
-                st.warning("⏳ خوادم جوجل تشهد ضغطاً لحظياً، يرجى الضغط على الزر مرة أخرى بعد قليل.")
-                st.caption(f"التفاصيل التقنية: {last_error}")
     if "saved_report" in st.session_state and st.session_state["saved_report"]:
         st.write("---")
         st.markdown("### ✨ تقرير الناقد الأكاديمي والعروضي المتكامل:")
         st.markdown(st.session_state["saved_report"])
+
         col1, col2 = st.columns(2)
         with col1:
             st.download_button("📥 تحميل نصي (TXT)", st.session_state["saved_report"], "Smart_Critic_Report.txt", use_container_width=True)
@@ -370,5 +359,6 @@ if GEMINI_API_KEY:
         st.dataframe(st.session_state["scansion_df"], use_container_width=True, height=350)
         csv_bytes = st.session_state["scansion_df"].to_csv(index=False).encode("utf-8-sig")
         st.download_button("📥 تحميل جدول تقطيع الأبيات (Excel / CSV)", csv_bytes, "Prosody_Scansion_Table.csv", "text/csv", use_container_width=True)
+
 else:
     st.info("💡 يرجى إضافة مفتاح GEMINI_API_KEY في إعدادات الـ Secrets الخاصة بالتطبيق.")
