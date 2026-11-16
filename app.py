@@ -52,27 +52,6 @@ class StyledPDF(FPDF):
         self.set_fill_color(250, 248, 244)
         self.rect(0, 0, 210, 297, 'F')
 
-    def footer(self):
-        # الانتقال إلى مسافة 16 ملم من أسفل الصفحة
-        self.set_y(-16)
-        # رسم خط فاصل ذهبي أنيق
-        self.set_draw_color(197, 160, 89)
-        self.set_line_width(0.4)
-        self.line(12, self.get_y(), 198, self.get_y())
-        self.ln(2)
-        
-        # طباعة اسم المنصة ورقم الصفحة
-        self.set_font("Almarai", "B", size=9)
-        self.set_text_color(90, 90, 90)
-        footer_text = f"منصة الناقد الذكي للتحليل الأدبي والعروضي  |  صفحة {self.page_no()}"
-        self.cell(0, 5, footer_text, ln=True, align='C')
-        
-        # طباعة رابط مدونتك القابل للنقر
-        blog_url = "https://alnjrimohammed.blogspot.com/"
-        self.set_text_color(15, 70, 150)
-        self.cell(0, 5, blog_url, ln=True, align='C', link=blog_url)
-
-
 def print_rtl_paragraph(pdf, text, line_height=8.5, max_chars=75, align='R'):
     for paragraph in text.split('\n'):
         # تجاهل خطوط الفواصل الخاصة بجداول الماركداون مثل |---|---|
@@ -90,7 +69,6 @@ def print_rtl_paragraph(pdf, text, line_height=8.5, max_chars=75, align='R'):
 def create_arabic_pdf(report_text, poem_text=""):
     pdf = StyledPDF()
     pdf.set_margins(12, 12, 12)
-    pdf.set_auto_page_break(auto=True, margin=20)
     pdf.add_page()
 
     # تفعيل المحرك العربي المدمج لضمان سلامة الحروف والألفات
@@ -112,17 +90,13 @@ def create_arabic_pdf(report_text, poem_text=""):
     print_rtl_paragraph(pdf, "تصميم وتطوير المبرمج: محمد النجري", line_height=10, max_chars=55, align='C')
     pdf.ln(5)
 
-    # 3. طباعة الأبيات بالتشكيل الكامل باللون الكحلي المميز
+    # 3. باقي الصفحة: خط Almarai-Bold الغامق بحجم 12 ولون أسود فحمي مريح
     pdf.set_font("Almarai", "B", size=12)
-    pdf.set_text_color(15, 50, 100)
-    clean_poem_for_pdf = re.sub(r'[\u064B-\u065F\u0670]', '', poem_text.replace("بيت شعري واحد مكون من شطرين:\n", ""))
-
-    print_rtl_paragraph(pdf, clean_poem_for_pdf, line_height=9.5, max_chars=75, align='R')
-    pdf.ln(5)
-
-    # 4. طباعة التقرير النقدي والعروضي بالتشكيل الكامل
     pdf.set_text_color(25, 25, 25)
-    print_rtl_paragraph(pdf, report_text, line_height=9.0, max_chars=75, align='R')
+    raw_all = poem_text + "\n\n" + report_text
+    no_tashkeel = re.sub(r'[\u064B-\u065F\u0670]', '', raw_all)
+
+    print_rtl_paragraph(pdf, no_tashkeel, line_height=8.5, max_chars=75, align='R')
 
     return bytes(pdf.output())
 
@@ -206,17 +180,17 @@ def classify_symbols(sym):
     for name, tafeelat, pattern in METERS_SIGNATURES:
         if re.match(pattern, sym):
             return (name, tafeelat)
-    if ("///0//0" in sym or sym.startswith(("/0/0//0", "//0//0"))) and len(sym) >= 15:
+    if "///0//0" in sym and len(sym) >= 18:
         return ("الكامل التام", "مُتَفَاعِلُنْ مُتَفَاعِلُنْ مُتَفَاعِلُنْ")
     if "//0///0" in sym and sym.endswith("//0/0"):
         return ("الوافر التام", "مُفَاعَلَتُنْ مُفَاعَلَتُنْ فَعُولُنْ")
     if sym.startswith(("/0/0//0/0/0//0", "//0//0/0/0//0")):
-        return ("السريع / الصخري", "مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ فَاعِلُنْ")
-    if sym.startswith(("//0/0//0/0", "//0/0//0/0/0", "//0///0/0")):
+        return ("السريع / الصخري", "مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ فَاعِلُنْ") if len(sym) <= 18 else ("الرجز التام", "مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ مُسْتَفْعِلُنْ")
+    if sym.startswith(("//0/0//0/0", "//0///0/0")):
         return ("الطويل", "فَعُولُنْ مَفَاعِيلُنْ فَعُولُنْ مَفَاعِلُنْ")
-    if sym.startswith(("/0/0//0/0//0", "//0//0/0//0")):
+    if sym.startswith(("/0/0//0/0//0", "/0/0//0///0")):
         return ("البسيط التام", "مُسْتَفْعِلُنْ فَاعِلُنْ مُسْتَفْعِلُنْ فَعِلُنْ")
-    return ("يتطابق مع البحر السائد", "تفعيلات قياسية")
+    return ("يُطابق مع البحر السائد", "تفعيلات قياسية")
 
 def detect_arabic_meter_and_table(raw_text, is_fusha=True):
     clean_kashida = raw_text.replace("ـ", "")
@@ -255,28 +229,20 @@ def detect_arabic_meter_and_table(raw_text, is_fusha=True):
         else:
             ashatar.append(line)
             
-    raw_rows = []
+    rows = []
     votes = {}
     for idx, shatr in enumerate(ashatar):
-        sym = line_to_prosody_symbols(shatr)
+        sym = line_to_prosody_symbols(shatr, is_fusha=is_fusha)
         meter_name, tafeelat = classify_symbols(sym)
-        if "يطابق" not in meter_name and meter_name != "غير محدد":
+        if "يُطابق" not in meter_name:
             votes[meter_name] = votes.get(meter_name, 0) + 1
-        raw_rows.append((idx + 1, shatr, meter_name, tafeelat, sym))
-
-    best_meter = max(votes, key=votes.get) if votes else "بحر عربي أصيل"
-    best_tafeelat = next((taf for _, _, name, taf, _ in raw_rows if name == best_meter), "تفعيلات موزونة")
-
-    rows = []
-    
-    for num, shatr, m_name, taf, sym in raw_rows:
-        # إذا كان الشطر على البحر السائد أو يحمل جوازاً لم يُكتشف، نعرض تفعيلات البحر السائد بدلاً من عبارة "تفعيلات قياسية"
-        final_taf = taf if m_name == best_meter else best_tafeelat
-        rows.append({"م": num, "الشطر": shatr, "التفعيلات": final_taf, "الرموز": sym})
-
+        rows.append({"م": idx + 1, "الشطر": shatr, "الرموز العروضية": sym, "البحر": meter_name, "التفعيلات": tafeelat})
+        
     df = pd.DataFrame(rows)
-    sample_syms = "\n".join([f"- الشطر ({r['م']}): {r['الرموز']}" for r in rows[:4]])
-
+    best_meter = max(votes, key=votes.get) if votes else "يُحدد من التقطيع الصوتي الدقيق"
+    best_tafeelat = next((taf for name, taf, _ in METERS_SIGNATURES if name == best_meter), "")
+    sample_syms = "\n".join([f"- الشطر ({r['م']}): {r['الشطر']} -> الرموز: {r['الرموز العروضية']} ({r['البحر']})" for r in rows[:6]])
+    
     report_str = (
         f"البحر الشعري المؤكد رياضياً (من واقع {len(rows)} شطر) هو: **بحر {best_meter}**\n"
         f"- التفعيلات القياسية: **{best_tafeelat}**\n"
@@ -328,7 +294,7 @@ if GEMINI_API_KEY:
         else:
             poem_sample = "\n".join(lines_list)
 
-        full_prompt = f"""أنت عالم عروض وناقد أدبي عربي خبير في منصة "الناقد الذكي".
+            full_prompt = f"""أنت عالم عروض وناقد أدبي عربي خبير في منصة "الناقد الذكي".
 بيانات الضبط العروضي الأولية (قد تتأثر بنقص التشكيل، فاعتمد التقطيع الصوتي الصحيح للكلمات):
 {meter_guidance}
 
@@ -357,56 +323,28 @@ if GEMINI_API_KEY:
 """
 
 
+
         with st.spinner("🔄 جاري استخراج التحليل الأكاديمي والعروضي الموثق..."):
             final_report = ""
+            available = [m.name.replace("models/", "") for m in client.models.list() if "gemini" in m.name]
+            preferred = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-1.5-flash"]
+            valid_models = [m for m in preferred if m in available] + [m for m in available if "flash" in m and m not in preferred]
 
-            # 3 نماذج محددة من عائلات خوادم مختلفة لسرعة الاستجابة (أقل من 5 ثوانٍ)
-            fast_fallback_models = [
-              "gemini-3.8-flash",
-              "gemma-3-27b-it",
-              "gemini-3.5-pro"
-        ]
+            for model_name in valid_models:
+                try:
+                    response = client.models.generate_content(model=model_name, contents=full_prompt)
+                    if response and response.text:
+                        final_report = response.text
+                        break
+                except Exception:
+                    time.sleep(1)
+                    continue
 
-        for model_name in fast_fallback_models:
-            try:
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=full_prompt
-                )
-                if response and response.text:
-                    final_report = response.text
-                    break
-            except Exception:
-                continue
-
-        if final_report:
-            st.session_state["saved_report"] = final_report
-            st.session_state["saved_poem"] = user_prompt
-        else:
-            st.warning("⏳ خوادم جوجل تشهد ضغطاً لحظياً في هذه الساعة، يرجى الضغط على الزر مرة أخرى بعد قليل.")
-
-
-        if final_report:
-            st.session_state["saved_report"] = final_report
-            st.session_state["saved_poem"] = user_prompt
-        else:
-            st.warning("⏳ خوادم جوجل تشهد ضغطاً لحظياً في هذه الساعة، يرجى الضغط على الزر مرة أخرى بعد قليل.")
-
-
-        if final_report:
-            st.session_state["saved_report"] = final_report
-            st.session_state["saved_poem"] = user_prompt
-        else:
-            st.warning("⏳ تعذر إتمام التحليل حالياً، يرجى المحاولة بعد قليل.")
-            st.error("تفاصيل الأخطاء:\n" + "\n\n".join(all_errors))
-
-            
-        if final_report:
-            st.session_state["saved_report"] = final_report
-            st.session_state["saved_poem"] = user_prompt
-        else:
-            st.warning("⏳ تعذر إتمام التحليل حالياً، يرجى المحاولة بعد قليل.")
-            st.error("تفاصيل الأخطاء:\n" + "\n\n".join(all_errors))
+            if final_report:
+                st.session_state["saved_report"] = final_report
+                st.session_state["saved_poem"] = poem_sample
+            else:
+                st.warning("⏳ خوادم جوجل تشهد ضغطاً لحظياً، يرجى الضغط على الزر مرة أخرى بعد قليل.")
 
     if "saved_report" in st.session_state and st.session_state["saved_report"]:
         st.write("---")
@@ -425,7 +363,7 @@ if GEMINI_API_KEY:
     if "scansion_df" in st.session_state and not st.session_state["scansion_df"].empty:
         st.write("---")
         st.markdown("### 📊 جدول التقطيع العروضي التفصيلي لجميع الأشطر")
-        st.table(st.session_state["scansion_df"])
+        st.dataframe(st.session_state["scansion_df"], use_container_width=True, height=350)
         csv_bytes = st.session_state["scansion_df"].to_csv(index=False).encode("utf-8-sig")
         st.download_button("📥 تحميل جدول تقطيع الأبيات (Excel / CSV)", csv_bytes, "Prosody_Scansion_Table.csv", "text/csv", use_container_width=True)
 else:
