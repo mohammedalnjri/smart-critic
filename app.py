@@ -361,14 +361,14 @@ if GEMINI_API_KEY:
              final_report = ""
              all_errors = []
 
-             # جلب النماذج المتاحة في حسابك والتي تدعم توليد النصوص فقط
+             # جلب النماذج المستقرة فقط واستبعاد النماذج التجريبية التي حدها المجاني صفر
              available_models = []
         try:
             for m in client.models.list():
                 if "gemini" in m.name and "flash" in m.name:
                     clean_name = m.name.replace("models/", "")
-                    # استبعاد النماذج المخصصة للصوت أو الصور أو التضمين
-                    if not any(x in clean_name for x in ["audio", "image", "tts", "embedding"]):
+                    excluded = ["audio", "image", "tts", "embedding", "omni", "preview", "exp"]
+                    if not any(x in clean_name for x in excluded):
                         available_models.append(clean_name)
         except Exception as list_err:
             all_errors.append(f"List Error: {list_err}")
@@ -376,8 +376,8 @@ if GEMINI_API_KEY:
         # ترتيب النماذج من الأحدث إلى الأقدم
         available_models.sort(reverse=True)
 
-        # تجربة أول 3 نماذج متاحة فعلياً
-        for model_name in available_models[:3]:
+        # تجربة كل النماذج المستقرة المتاحة حتى ينجح أول نموذج
+        for model_name in available_models:
             try:
                 response = client.models.generate_content(
                     model=model_name,
@@ -388,8 +388,14 @@ if GEMINI_API_KEY:
                     break
             except Exception as e:
                 all_errors.append(f"{model_name}: {str(e)}")
-                time.sleep(1)
                 continue
+
+        if final_report:
+            st.session_state["saved_report"] = final_report
+            st.session_state["saved_poem"] = user_prompt
+        else:
+            st.warning("⏳ تعذر إتمام التحليل حالياً، يرجى المحاولة بعد قليل.")
+            st.error("تفاصيل الأخطاء:\n" + "\n\n".join(all_errors))
 
             
         if final_report:
