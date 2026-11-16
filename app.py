@@ -59,9 +59,9 @@ class StyledPDF(FPDF):
         self.cell(
             186,
             8,
-            f"المدونة الأدبية للمبرمج محمد النجري: mohammedalnjri.blogspot.com  |  صفحة {self.page_no()}",
+            f"المدونة الأدبية للمبرمج محمد النجري: alnjrimohammed.blogspot.com  |  صفحة {self.page_no()}",
             align='C',
-            link="https://mohammedalnjri.blogspot.com"
+            link="https://alnjrimohammed.blogspot.com/"
         )
 
 def print_rtl_paragraph(pdf, text, line_height=8.5, max_chars=75, align='R'):
